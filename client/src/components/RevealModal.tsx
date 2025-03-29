@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { AI_MODELS } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,14 +14,12 @@ interface RevealModalProps {
 export default function RevealModal({ isOpen, onClose, selectedModel }: RevealModalProps) {
   const [revealed, setRevealed] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [animationComplete, setAnimationComplete] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       // Reset state when modal closes
       setTimeout(() => {
         setRevealed(false);
-        setAnimationComplete(false);
       }, 300);
     }
   }, [isOpen]);
@@ -33,11 +30,6 @@ export default function RevealModal({ isOpen, onClose, selectedModel }: RevealMo
     const correctGuess = (selectedModel === 'openai' && openAiModel.name.includes('GPT')) || 
                         (selectedModel === 'anthropic' && anthropicModel.name.includes('Claude'));
     setIsCorrect(correctGuess);
-    
-    // Set animation complete after delay
-    setTimeout(() => {
-      setAnimationComplete(true);
-    }, 1200);
   };
 
   const handleCreateAnother = () => {
@@ -61,387 +53,282 @@ export default function RevealModal({ isOpen, onClose, selectedModel }: RevealMo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl overflow-hidden p-0 rounded-2xl">
-        {/* Header */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-8 pb-6">
-          <div className="absolute top-0 right-0 w-full h-full opacity-10">
-            <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 filter blur-2xl"></div>
-            <div className="absolute top-40 -left-20 w-60 h-60 rounded-full bg-white/10 filter blur-xl"></div>
-          </div>
-          
-          <div className="relative z-10">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex justify-center mb-4"
-            >
-              <Badge className="bg-white/20 text-white hover:bg-white/30 px-4 py-1.5 text-sm rounded-full backdrop-blur-sm">
-                AI Model Reveal
-              </Badge>
-            </motion.div>
-            
-            <motion.h2 
-              className="font-heading font-bold text-4xl mb-4 text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              You Selected Itinerary {selectedModel === 'openai' ? 'A' : 'B'}!
-            </motion.h2>
-            
-            <motion.p 
-              className="text-white/80 text-center max-w-xl mx-auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Let's see which AI model created your preferred itinerary
-            </motion.p>
-            
-            <AnimatePresence>
-              {revealed && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
-                  className={`mt-6 p-4 rounded-xl ${isCorrect ? 'bg-green-500/20 backdrop-blur-sm' : 'bg-amber-500/20 backdrop-blur-sm'} mx-auto max-w-xl`}
-                >
-                  {isCorrect ? (
-                    <div className="flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-green-500/30 flex items-center justify-center mr-3">
-                        <i className="fas fa-trophy text-yellow-300"></i>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-lg">Great job! You correctly identified the AI model!</p>
-                        <p className="text-sm text-white/70">Your AI detection skills are impressive</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-amber-500/30 flex items-center justify-center mr-3">
-                        <i className="fas fa-surprise text-amber-300"></i>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-lg">Interesting choice! AI models can be tricky to tell apart.</p>
-                        <p className="text-sm text-white/70">Both models created impressive itineraries</p>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-        
-        {/* Main content */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Selected Model */}
-            <motion.div 
-              className={`rounded-2xl overflow-hidden shadow-lg transition-all duration-300 ${
-                selectedModel === 'openai' 
-                  ? 'bg-gradient-to-b from-blue-50 to-white border border-blue-200'
-                  : 'bg-gradient-to-b from-teal-50 to-white border border-teal-200'
-              }`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className={`py-6 px-4 ${
-                selectedModel === 'openai' 
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-700' 
-                  : 'bg-gradient-to-r from-teal-600 to-teal-700'
-              } text-white relative overflow-hidden`}>
-                <div className="absolute top-0 right-0 w-28 h-28 opacity-15">
-                  <i className="fas fa-crown text-7xl absolute top-2 -right-2 transform rotate-15"></i>
+      <DialogContent className="max-w-3xl overflow-hidden p-0 rounded-xl">
+        <div className="bg-indigo-600 p-6 text-white text-center">
+          <DialogTitle className="text-3xl font-bold mb-2">
+            You Selected Itinerary {selectedModel === 'openai' ? 'A' : 'B'}!
+          </DialogTitle>
+          <DialogDescription className="text-white/90 text-base">
+            Let's see which AI model created your preferred itinerary
+          </DialogDescription>
+
+          {revealed && isCorrect && (
+            <div className="mt-4 bg-green-500/20 border border-green-500/30 rounded-lg p-3 mx-auto max-w-md">
+              <div className="flex items-center">
+                <div className="mr-3 bg-green-500/20 w-8 h-8 rounded-full flex items-center justify-center">
+                  <span role="img" aria-label="trophy" className="text-yellow-300 text-xl">🏆</span>
                 </div>
-                
-                <div className="flex items-center">
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mr-4">
-                      <span className="text-white font-bold text-xl">
-                        {selectedModel === 'openai' ? 'A' : 'B'}
-                      </span>
-                    </div>
-                    <motion.div 
-                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.7, type: "spring" }}
-                    >
-                      <i className="fas fa-check text-xs text-white"></i>
-                    </motion.div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-bold text-xl">Your Selection</h3>
-                    <p className="text-white/80 text-sm">Itinerary {selectedModel === 'openai' ? 'A' : 'B'}</p>
-                  </div>
+                <div className="text-left">
+                  <p className="font-medium">Great job! You correctly identified the AI model!</p>
+                  <p className="text-sm text-white/80">Your AI detection skills are impressive</p>
                 </div>
               </div>
-              
-              <div className="p-6">
-                <div className="flex justify-center mb-5">
-                  <AnimatePresence>
-                    {!revealed ? (
-                      <motion.div 
-                        className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center"
-                        exit={{ scale: 0.5, opacity: 0 }}
-                        key="hidden-logo"
-                      >
-                        <i className="fas fa-question text-gray-400 text-5xl"></i>
-                      </motion.div>
-                    ) : (
-                      <motion.div 
-                        className={`w-24 h-24 rounded-full ${
-                          selectedModel === 'openai' ? 'bg-blue-100' : 'bg-teal-100'
-                        } flex items-center justify-center`}
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1, rotate: [0, 10, 0] }}
-                        transition={{ type: "spring", duration: 0.6 }}
-                        key="shown-logo"
-                      >
-                        <i className={`${
-                          selectedModel === 'openai' ? 'fas fa-robot text-blue-600' : 'fas fa-brain text-teal-600'
-                        } text-5xl`}></i>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                
-                <AnimatePresence>
-                  {revealed && (
-                    <motion.div 
-                      className="text-center mb-6"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <h3 className={`font-bold text-2xl mb-1 ${
-                        selectedModel === 'openai' ? 'text-blue-600' : 'text-teal-600'
-                      }`}>
-                        {selectedModelData.name}
-                      </h3>
-                      <p className="text-gray-600">{selectedModelData.description}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                <div className="space-y-3">
-                  <motion.div 
-                    className={`p-3 rounded-lg ${
-                      selectedModel === 'openai' ? 'bg-blue-50' : 'bg-teal-50'
-                    } border ${
-                      selectedModel === 'openai' ? 'border-blue-100' : 'border-teal-100'
-                    }`}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: revealed ? 0.5 : 0.2 }}
-                  >
-                    <div className="flex">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                        selectedModel === 'openai' ? 'bg-blue-100 text-blue-600' : 'bg-teal-100 text-teal-600'
-                      }`}>
-                        <i className="fas fa-star-half-alt"></i>
-                      </div>
-                      <div>
-                        <p className="font-medium">Strength</p>
-                        <p className="text-sm text-gray-600">{selectedModelData.strength}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className={`p-3 rounded-lg ${
-                      selectedModel === 'openai' ? 'bg-blue-50' : 'bg-teal-50'
-                    } border ${
-                      selectedModel === 'openai' ? 'border-blue-100' : 'border-teal-100'
-                    }`}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: revealed ? 0.6 : 0.3 }}
-                  >
-                    <div className="flex">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                        selectedModel === 'openai' ? 'bg-blue-100 text-blue-600' : 'bg-teal-100 text-teal-600'
-                      }`}>
-                        <i className="fas fa-bullseye"></i>
-                      </div>
-                      <div>
-                        <p className="font-medium">Focus</p>
-                        <p className="text-sm text-gray-600">{selectedModelData.focus}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-            
-            {/* Other Model (The one not selected) */}
-            <motion.div 
-              className="rounded-2xl overflow-hidden shadow-md border border-gray-200 bg-white"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: revealed ? 1 : 0.7, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="py-5 px-4 bg-gray-100 text-gray-800 relative overflow-hidden">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-4">
-                    <span className="text-gray-700 font-medium">
-                      {selectedModel === 'openai' ? 'B' : 'A'}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-lg">Other AI</h3>
-                    <p className="text-gray-600 text-sm">Itinerary {selectedModel === 'openai' ? 'B' : 'A'}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-6">
-                <div className="flex justify-center mb-5">
-                  <AnimatePresence>
-                    {!revealed ? (
-                      <motion.div 
-                        className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center"
-                        exit={{ scale: 0.5, opacity: 0 }}
-                        key="hidden-other-logo"
-                      >
-                        <i className="fas fa-question text-gray-400 text-4xl"></i>
-                      </motion.div>
-                    ) : (
-                      <motion.div 
-                        className={`w-20 h-20 rounded-full ${
-                          selectedModel !== 'openai' ? 'bg-blue-50' : 'bg-teal-50'
-                        } flex items-center justify-center`}
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring", duration: 0.6, delay: 0.2 }}
-                        key="shown-other-logo"
-                      >
-                        <i className={`${
-                          selectedModel !== 'openai' ? 'fas fa-robot text-blue-500' : 'fas fa-brain text-teal-500'
-                        } text-4xl opacity-80`}></i>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                
-                <AnimatePresence>
-                  {revealed && (
-                    <motion.div 
-                      className="text-center mb-6"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.6 }}
-                    >
-                      <h3 className={`font-bold text-xl mb-1 ${
-                        selectedModel !== 'openai' ? 'text-blue-500' : 'text-teal-500'
-                      }`}>
-                        {otherModelData.name}
-                      </h3>
-                      <p className="text-gray-600 text-sm">{otherModelData.description}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
-                <div className="space-y-3">
-                  <motion.div 
-                    className="p-3 rounded-lg bg-gray-50 border border-gray-100"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: revealed ? 0.7 : 0.4 }}
-                  >
-                    <div className="flex">
-                      <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center mr-3 text-gray-600">
-                        <i className="fas fa-star-half-alt text-sm"></i>
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">Strength</p>
-                        <p className="text-xs text-gray-600">{revealed ? otherModelData.strength : "????"}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div 
-                    className="p-3 rounded-lg bg-gray-50 border border-gray-100"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: revealed ? 0.8 : 0.5 }}
-                  >
-                    <div className="flex">
-                      <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center mr-3 text-gray-600">
-                        <i className="fas fa-bullseye text-sm"></i>
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">Focus</p>
-                        <p className="text-xs text-gray-600">{revealed ? otherModelData.focus : "????"}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-          
-          {/* Bottom content */}
-          {revealed && animationComplete && (
-            <motion.div 
-              className="mt-8 p-5 rounded-xl bg-indigo-50 border border-indigo-100"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9 }}
-            >
-              <h3 className="font-semibold text-lg mb-3 flex items-center text-indigo-700">
-                <i className="fas fa-info-circle mr-2 text-indigo-500"></i>
-                Did you know?
-              </h3>
-              <p className="text-gray-700">
-                Different AI models have distinct approaches to creating itineraries. {openAiModel.name} often excels at 
-                creating diverse, creative suggestions, while {anthropicModel.name} frequently provides 
-                more detailed and structured guidance. Which did you prefer?
-              </p>
-            </motion.div>
+            </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 bg-gray-50 border-t border-gray-100">
-          <motion.div 
-            className="flex flex-col sm:flex-row sm:justify-center gap-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            {!revealed ? (
-              <Button 
-                onClick={handleReveal} 
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-6 rounded-xl font-medium shadow-md transition-colors"
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Selected Model */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden border border-blue-100">
+              <div className="bg-blue-600 p-4 text-white">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                    <span className="font-bold">{selectedModel === 'openai' ? 'A' : 'B'}</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold">Your Selection</h3>
+                    <p className="text-sm text-white/80">Itinerary {selectedModel === 'openai' ? 'A' : 'B'}</p>
+                  </div>
+                  {revealed && (
+                    <div className="ml-auto">
+                      <span className="bg-yellow-400 text-yellow-800 text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                        ✓
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="p-5">
+                <div className="flex justify-center mb-4">
+                  {!revealed ? (
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-gray-400 text-4xl">?</span>
+                    </div>
+                  ) : (
+                    <div>
+                      {selectedModel === 'openai' ? (
+                        <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 text-3xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
+                              <path d="M12 0c-6.626 0-12 5.373-12 12 0 6.627 5.374 12 12 12 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12zm5.9 6.4c1.769 0 3.1 1.331 3.1 3.1s-1.331 3.1-3.1 3.1-3.1-1.331-3.1-3.1 1.331-3.1 3.1-3.1zm-5.9 4.2c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4c0 1.286-.611 2.428-1.556 3.164.344.401.556.91.556 1.466 0 1.105-.895 2-2 2-.766 0-1.43-.432-1.766-1.063-.078-.02-.156-.037-.234-.037-.214 0-.414.097-.547.267-.133.17-.173.39-.107.592.248.751.691 1.398 1.254 1.86-1.279 1.247-3.025 2.018-4.95 2.018-3.866 0-7-3.134-7-7s3.134-7 7-7c2.125 0 4.028.945 5.318 2.437-1.159 1.24-1.518 2.325-1.518 3.563 0 .478.078.926.215 1.349z"/>
+                            </svg>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center">
+                          <span className="text-teal-600 text-3xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
+                              <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z"/>
+                            </svg>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {revealed && (
+                  <div className="text-center mb-4">
+                    <h3 className={`font-bold text-xl ${selectedModel === 'openai' ? 'text-blue-600' : 'text-teal-600'}`}>
+                      {selectedModel === 'openai' ? 'GPT-4o' : 'Claude 3.7 Sonnet'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {selectedModel === 'openai' 
+                        ? "OpenAI's advanced language model" 
+                        : "Anthropic's most capable AI assistant"}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  <div className={`p-3 rounded-lg ${selectedModel === 'openai' ? 'bg-blue-50' : 'bg-teal-50'}`}>
+                    <div className="flex">
+                      <div className="mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${selectedModel === 'openai' ? 'text-blue-600' : 'text-teal-600'}`} viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium">Strength</p>
+                        <p className="text-sm text-gray-600">
+                          {selectedModel === 'openai' 
+                            ? 'Focuses on cultural immersion' 
+                            : revealed ? 'Efficient landmark coverage' : '????'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-lg ${selectedModel === 'openai' ? 'bg-blue-50' : 'bg-teal-50'}`}>
+                    <div className="flex">
+                      <div className="mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${selectedModel === 'openai' ? 'text-blue-600' : 'text-teal-600'}`} viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium">Focus</p>
+                        <p className="text-sm text-gray-600">
+                          {selectedModel === 'openai' 
+                            ? 'Local Experiences' 
+                            : revealed ? 'Iconic Experiences' : '????'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Other Model */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+              <div className="bg-gray-100 p-4 text-gray-800">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                    <span className="font-medium">{selectedModel === 'openai' ? 'B' : 'A'}</span>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Other AI</h3>
+                    <p className="text-sm text-gray-600">Itinerary {selectedModel === 'openai' ? 'B' : 'A'}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-5">
+                <div className="flex justify-center mb-4">
+                  {!revealed ? (
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-gray-400 text-4xl">?</span>
+                    </div>
+                  ) : (
+                    <div>
+                      {selectedModel !== 'openai' ? (
+                        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center">
+                          <span className="text-blue-500 text-3xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
+                              <path d="M12 0c-6.626 0-12 5.373-12 12 0 6.627 5.374 12 12 12 6.627 0 12-5.373 12-12 0-6.627-5.373-12-12-12zm5.9 6.4c1.769 0 3.1 1.331 3.1 3.1s-1.331 3.1-3.1 3.1-3.1-1.331-3.1-3.1 1.331-3.1 3.1-3.1zm-5.9 4.2c-2.209 0-4-1.79-4-4s1.791-4 4-4 4 1.79 4 4c0 1.286-.611 2.428-1.556 3.164.344.401.556.91.556 1.466 0 1.105-.895 2-2 2-.766 0-1.43-.432-1.766-1.063-.078-.02-.156-.037-.234-.037-.214 0-.414.097-.547.267-.133.17-.173.39-.107.592.248.751.691 1.398 1.254 1.86-1.279 1.247-3.025 2.018-4.95 2.018-3.866 0-7-3.134-7-7s3.134-7 7-7c2.125 0 4.028.945 5.318 2.437-1.159 1.24-1.518 2.325-1.518 3.563 0 .478.078.926.215 1.349z"/>
+                            </svg>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="w-24 h-24 bg-teal-50 rounded-full flex items-center justify-center">
+                          <span className="text-teal-500 text-3xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12">
+                              <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63 13.067 13.067 0 01-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 01-.364-.63l-.001-.122zM17.25 19.128l-.001.144a2.25 2.25 0 01-.233.96 10.088 10.088 0 005.06-1.01.75.75 0 00.42-.643 4.875 4.875 0 00-6.957-4.611 8.586 8.586 0 011.71 5.157v.003z"/>
+                            </svg>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                {revealed && (
+                  <div className="text-center mb-4">
+                    <h3 className={`font-bold text-xl ${selectedModel !== 'openai' ? 'text-blue-500' : 'text-teal-500'}`}>
+                      {selectedModel !== 'openai' ? 'GPT-4o' : 'Claude 3.7 Sonnet'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {selectedModel !== 'openai' 
+                        ? "OpenAI's advanced language model" 
+                        : "Anthropic's most capable AI assistant"}
+                    </p>
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  <div className={`p-3 rounded-lg ${revealed ? 'bg-gray-50' : 'bg-gray-50 opacity-70'}`}>
+                    <div className="flex">
+                      <div className="mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium">Strength</p>
+                        <p className="text-sm text-gray-600">
+                          {revealed 
+                            ? (selectedModel !== 'openai' ? 'Focuses on cultural immersion' : 'Efficient landmark coverage')
+                            : '????'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`p-3 rounded-lg ${revealed ? 'bg-gray-50' : 'bg-gray-50 opacity-70'}`}>
+                    <div className="flex">
+                      <div className="mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="font-medium">Focus</p>
+                        <p className="text-sm text-gray-600">
+                          {revealed 
+                            ? (selectedModel !== 'openai' ? 'Local Experiences' : 'Iconic Experiences')
+                            : '????'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {revealed && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 mr-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-blue-800 mb-1">Did you know?</p>
+                  <p className="text-sm text-gray-700">
+                    Different AI models have distinct approaches to creating itineraries. GPT-4o often excels at creating diverse, 
+                    creative suggestions, while Claude 3.7 Sonnet frequently provides more detailed and structured guidance.
+                    Which did you prefer?
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Footer with buttons */}
+        <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-center">
+          {!revealed ? (
+            <Button 
+              onClick={handleReveal}
+              className="bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-lg text-white shadow-md flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              Reveal AI Models
+            </Button>
+          ) : (
+            <div className="flex gap-4">
+              <Button
+                onClick={handleCreateAnother} 
+                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2"
               >
-                <i className="fas fa-magic mr-2"></i>
-                Reveal AI Models
+                Create Another Itinerary
               </Button>
-            ) : (
-              <>
-                <Button 
-                  onClick={handleCreateAnother} 
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 py-5 rounded-xl font-medium shadow-md transition-colors"
-                >
-                  <i className="fas fa-plus-circle mr-2"></i>
-                  Create Another Itinerary
-                </Button>
-                <Button 
-                  onClick={onClose} 
-                  variant="outline" 
-                  className="bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 px-6 py-5 rounded-xl font-medium shadow-sm transition-colors"
-                >
-                  Close
-                </Button>
-              </>
-            )}
-          </motion.div>
+              <Button
+                onClick={onClose}
+                variant="outline"
+                className="border-gray-300 text-gray-700 rounded-lg px-4 py-2"
+              >
+                Close
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

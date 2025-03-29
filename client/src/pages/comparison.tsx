@@ -247,35 +247,12 @@ export default function Comparison() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 rounded-t-2xl text-white shadow-md relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-40 h-40 opacity-10">
-                    <i className="fas fa-robot text-9xl absolute -top-6 -right-6 transform rotate-12"></i>
-                  </div>
-                  <div className="relative z-10 flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner backdrop-blur-sm">
-                      <span className="text-white font-bold text-xl">A</span>
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold mb-1">AI Expert A</h3>
-                      <p className="text-white/80 text-sm">
-                        {revealed ? (
-                          <span className="font-medium">{itinerary.openAiItinerary?.model || "GPT-4"}</span>
-                        ) : (
-                          <span>Guess which AI created this itinerary</span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex-grow">
-                  <ItineraryCard 
-                    itinerary={itinerary.openAiItinerary}
-                    type="openai"
-                    onSelectItinerary={handleSelectItinerary}
-                    revealed={choiceMade}
-                  />
-                </div>
+                <ItineraryCard 
+                  itinerary={itinerary.openAiItinerary}
+                  type="openai"
+                  onSelectItinerary={handleSelectItinerary}
+                  revealed={choiceMade}
+                />
               </motion.div>
               
               {/* Itinerary B - Anthropic */}
@@ -285,35 +262,12 @@ export default function Comparison() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <div className="bg-gradient-to-r from-teal-600 to-teal-700 p-5 rounded-t-2xl text-white shadow-md relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-40 h-40 opacity-10">
-                    <i className="fas fa-brain text-9xl absolute -top-6 -right-6 transform rotate-12"></i>
-                  </div>
-                  <div className="relative z-10 flex items-center">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner backdrop-blur-sm">
-                      <span className="text-white font-bold text-xl">B</span>
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold mb-1">AI Expert B</h3>
-                      <p className="text-white/80 text-sm">
-                        {revealed ? (
-                          <span className="font-medium">{itinerary.anthropicItinerary?.model || "Claude"}</span>
-                        ) : (
-                          <span>Guess which AI created this itinerary</span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex-grow">
-                  <ItineraryCard 
-                    itinerary={itinerary.anthropicItinerary}
-                    type="anthropic"
-                    onSelectItinerary={handleSelectItinerary}
-                    revealed={choiceMade}
-                  />
-                </div>
+                <ItineraryCard 
+                  itinerary={itinerary.anthropicItinerary}
+                  type="anthropic"
+                  onSelectItinerary={handleSelectItinerary}
+                  revealed={choiceMade}
+                />
               </motion.div>
             </div>
           )}

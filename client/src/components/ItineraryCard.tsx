@@ -40,7 +40,7 @@ export default function ItineraryCard({
   const renderDayActivities = (day: Day, dayIndex: number) => {
     const isExpanded = expandedDays.has(dayIndex);
     
-    // Group activities by time (Morning, Afternoon, Evening) or use default grouping
+    // Group activities by time (Morning, Afternoon, Evening) with consistent order
     const timeGroups = ['Morning', 'Afternoon', 'Evening'];
     const groupedActivities: Record<string, typeof day.activities> = {};
     
@@ -57,6 +57,18 @@ export default function ItineraryCard({
       );
     });
     
+    // Ensure each time period has at least one empty slot for alignment
+    timeGroups.forEach(time => {
+      if (groupedActivities[time].length === 0) {
+        groupedActivities[time] = [{ 
+          title: "Free time", 
+          description: "No specific activity scheduled for this time period.",
+          type: "relaxation",
+          isPlaceholder: true
+        }];
+      }
+    });
+    
     return (
       <div className="pl-11 space-y-4 pb-2">
         {isExpanded ? (
@@ -64,20 +76,33 @@ export default function ItineraryCard({
             {timeGroups.map(time => (
               <div key={time} className="mb-4">
                 <div className={`rounded-md p-2 mb-3 ${
-                  time === 'Morning' ? 'bg-amber-50' : 
-                  time === 'Afternoon' ? 'bg-sky-50' : 'bg-indigo-50'
+                  time === 'Morning' ? 'bg-amber-50 border border-amber-100' : 
+                  time === 'Afternoon' ? 'bg-sky-50 border border-sky-100' : 
+                  'bg-indigo-50 border border-indigo-100'
                 }`}>
-                  <h5 className="font-medium text-gray-800">{time}</h5>
+                  <div className="flex items-center">
+                    <span className={`inline-block w-5 h-5 rounded-full mr-2 flex-shrink-0 ${
+                      time === 'Morning' ? 'bg-amber-200' : 
+                      time === 'Afternoon' ? 'bg-sky-200' : 
+                      'bg-indigo-200'
+                    }`}></span>
+                    <h5 className="font-medium text-gray-800">{time}</h5>
+                  </div>
                 </div>
                 {groupedActivities[time].length > 0 ? (
                   <div className="space-y-4">
                     {groupedActivities[time].map((activity, idx) => (
-                      <div key={idx} className="flex items-start bg-white p-3 rounded-md border border-gray-100 shadow-sm">
+                      <div 
+                        key={idx} 
+                        className={`flex items-start bg-white p-3 rounded-md border ${activity.isPlaceholder ? 'border-gray-100 border-dashed' : 'border-gray-200'} shadow-sm`}
+                      >
                         <div className={`flex-shrink-0 h-8 w-8 rounded-full ${colors.light} flex items-center justify-center mr-3`}>
                           <i className={`fas ${getActivityIcon(activity.type)} ${colors.text} text-sm`}></i>
                         </div>
                         <div className="flex-grow">
-                          <p className="font-medium">{activity.title}</p>
+                          <p className={`font-medium ${activity.isPlaceholder ? 'text-gray-500 italic' : ''}`}>
+                            {activity.title}
+                          </p>
                           <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
                           {activity.location && (
                             <p className="text-xs text-gray-500 mt-2 flex items-center">
@@ -151,28 +176,34 @@ export default function ItineraryCard({
 
   return (
     <Card className="border overflow-hidden shadow-lg bg-white hover:shadow-xl transition-shadow h-full flex flex-col">
-      <CardHeader className={`p-5 text-white ${bgGradient} relative overflow-hidden`}>
-        <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-          <i className="fas fa-map-marked-alt text-8xl absolute -top-4 -right-4 transform rotate-12"></i>
+      <CardHeader className={`p-6 text-white ${bgGradient} relative overflow-hidden`}>
+        <div className="absolute top-0 right-0 w-full h-full opacity-10">
+          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 filter blur-xl"></div>
+          <div className="absolute bottom-10 -left-20 w-60 h-60 rounded-full bg-white/10 filter blur-lg"></div>
         </div>
         
         <div className="flex justify-between items-center z-10 relative">
           <div>
-            <motion.h3 
-              className="font-heading font-bold text-2xl mb-1"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              Itinerary {type === 'openai' ? 'A' : 'B'}
-            </motion.h3>
+            <div className="flex items-center mb-2">
+              <div className="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold mr-3 backdrop-blur-sm">
+                {type === 'openai' ? 'A' : 'B'}
+              </div>
+              <motion.h3 
+                className="font-heading font-bold text-2xl"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                Itinerary {type === 'openai' ? 'A' : 'B'}
+              </motion.h3>
+            </div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               <p className="text-sm opacity-90 flex items-center">
-                <i className="fas fa-brain mr-2"></i>
+                <i className={`fas ${type === 'openai' ? 'fa-robot' : 'fa-brain'} mr-2`}></i>
                 AI Expert {type === 'openai' ? 'A' : 'B'}
                 {revealed && (
                   <Badge variant="outline" className="ml-2 bg-white/20 font-semibold">
@@ -184,10 +215,10 @@ export default function ItineraryCard({
           </div>
           
           <motion.div 
-            className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm shadow-inner"
+            className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm shadow-inner"
             whileHover={{ scale: 1.05, rotate: 5 }}
           >
-            <i className="fas fa-robot text-2xl"></i>
+            <i className={`fas ${type === 'openai' ? 'fa-microchip' : 'fa-brain'} text-xl`}></i>
           </motion.div>
         </div>
       </CardHeader>
@@ -294,10 +325,14 @@ export default function ItineraryCard({
         )}
       </CardContent>
       
-      <CardFooter className={`p-5 border-t ${type === 'openai' ? 'bg-blue-50 border-blue-100' : 'bg-teal-50 border-teal-100'}`}>
+      <CardFooter className={`p-5 border-t ${type === 'openai' ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100' : 'bg-gradient-to-r from-teal-50 to-emerald-50 border-teal-100'}`}>
         <div className="w-full">
           <Button 
-            className={`w-full ${type === 'openai' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-teal-600 hover:bg-teal-700'} text-white py-6 rounded-xl text-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5`}
+            className={`w-full ${
+              type === 'openai' 
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700' 
+                : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700'
+            } text-white py-5 rounded-xl text-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5`}
             onClick={() => onSelectItinerary(type)}
           >
             <i className="fas fa-check-circle mr-2"></i>
@@ -305,9 +340,19 @@ export default function ItineraryCard({
           </Button>
           
           {revealed && (
-            <p className="text-center mt-3 text-sm text-gray-600">
-              This itinerary was created by {itinerary.model || (type === 'openai' ? 'GPT-4' : 'Claude')}
-            </p>
+            <div className="text-center mt-4 flex flex-col items-center">
+              <Badge className={`${
+                type === 'openai'
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
+              } px-3 py-1`}>
+                <i className={`fas ${type === 'openai' ? 'fa-robot' : 'fa-brain'} mr-1.5`}></i>
+                {itinerary.model || (type === 'openai' ? 'GPT-4o' : 'Claude 3.7 Sonnet')}
+              </Badge>
+              <p className="mt-2 text-sm text-gray-600">
+                This itinerary was created by {type === 'openai' ? 'OpenAI' : 'Anthropic'}
+              </p>
+            </div>
           )}
         </div>
       </CardFooter>

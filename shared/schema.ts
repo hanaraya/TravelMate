@@ -86,6 +86,7 @@ export const DAY_STRUCTURE = z.object({
       time: z.string().optional(),
       type: z.string().optional(),
       location: z.string().optional(),
+      isPlaceholder: z.boolean().optional(),
     })
   )
 });
