@@ -37,69 +37,62 @@ export default function ItineraryCard({
   const renderDayActivities = (day: Day, dayIndex: number) => {
     const isExpanded = expandedDays.has(dayIndex);
     
+    // Group activities by time (Morning, Afternoon, Evening) or use default grouping
+    const timeGroups = ['Morning', 'Afternoon', 'Evening'];
+    const groupedActivities: Record<string, typeof day.activities> = {};
+    
+    // Initialize groups
+    timeGroups.forEach(time => {
+      groupedActivities[time] = day.activities.filter(a => 
+        a.time?.includes(time) || 
+        // If no time specified, make a best guess based on activity order
+        (!a.time && 
+          ((time === 'Morning' && day.activities.indexOf(a) < day.activities.length / 3) ||
+           (time === 'Afternoon' && day.activities.indexOf(a) >= day.activities.length / 3 && day.activities.indexOf(a) < 2 * day.activities.length / 3) ||
+           (time === 'Evening' && day.activities.indexOf(a) >= 2 * day.activities.length / 3))
+        )
+      );
+    });
+    
     return (
-      <div className="pl-11 space-y-4">
+      <div className="pl-11 space-y-4 pb-2">
         {isExpanded ? (
           <>
-            {/* Morning */}
-            <div>
-              <h5 className="font-medium text-gray-800 mb-2">Morning</h5>
-              {day.activities.filter(a => a.time?.includes('Morning')).map((activity, idx) => (
-                <div key={idx} className="flex items-start mb-3">
-                  <i className={`fas ${getActivityIcon(activity.type)} text-gray-500 mt-1 mr-3`}></i>
-                  <div>
-                    <p className="font-medium">{activity.title}</p>
-                    <p className="text-sm text-gray-600">{activity.description}</p>
-                    {activity.location && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        <i className="fas fa-map-marker-alt mr-1"></i> {activity.location}
-                      </p>
-                    )}
-                  </div>
+            {timeGroups.map(time => (
+              <div key={time} className="mb-4">
+                <div className={`rounded-md p-2 mb-3 ${
+                  time === 'Morning' ? 'bg-amber-50' : 
+                  time === 'Afternoon' ? 'bg-sky-50' : 'bg-indigo-50'
+                }`}>
+                  <h5 className="font-medium text-gray-800">{time}</h5>
                 </div>
-              ))}
-            </div>
-            
-            {/* Afternoon */}
-            <div>
-              <h5 className="font-medium text-gray-800 mb-2">Afternoon</h5>
-              {day.activities.filter(a => a.time?.includes('Afternoon')).map((activity, idx) => (
-                <div key={idx} className="flex items-start mb-3">
-                  <i className={`fas ${getActivityIcon(activity.type)} text-gray-500 mt-1 mr-3`}></i>
-                  <div>
-                    <p className="font-medium">{activity.title}</p>
-                    <p className="text-sm text-gray-600">{activity.description}</p>
-                    {activity.location && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        <i className="fas fa-map-marker-alt mr-1"></i> {activity.location}
-                      </p>
-                    )}
+                {groupedActivities[time].length > 0 ? (
+                  <div className="space-y-4">
+                    {groupedActivities[time].map((activity, idx) => (
+                      <div key={idx} className="flex items-start bg-white p-3 rounded-md border border-gray-100 shadow-sm">
+                        <div className={`flex-shrink-0 h-8 w-8 rounded-full ${colors.light} flex items-center justify-center mr-3`}>
+                          <i className={`fas ${getActivityIcon(activity.type)} ${colors.text} text-sm`}></i>
+                        </div>
+                        <div className="flex-grow">
+                          <p className="font-medium">{activity.title}</p>
+                          <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                          {activity.location && (
+                            <p className="text-xs text-gray-500 mt-2 flex items-center">
+                              <i className="fas fa-map-marker-alt mr-1"></i> {activity.location}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Evening */}
-            <div>
-              <h5 className="font-medium text-gray-800 mb-2">Evening</h5>
-              {day.activities.filter(a => a.time?.includes('Evening')).map((activity, idx) => (
-                <div key={idx} className="flex items-start mb-3">
-                  <i className={`fas ${getActivityIcon(activity.type)} text-gray-500 mt-1 mr-3`}></i>
-                  <div>
-                    <p className="font-medium">{activity.title}</p>
-                    <p className="text-sm text-gray-600">{activity.description}</p>
-                    {activity.location && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        <i className="fas fa-map-marker-alt mr-1"></i> {activity.location}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No activities scheduled</p>
+                )}
+              </div>
+            ))}
             
             <button 
-              className={`${colors.text} font-medium flex items-center hover:underline`}
+              className={`mt-2 ${colors.text} font-medium flex items-center hover:underline transition-all`}
               onClick={() => toggleDay(dayIndex)}
             >
               Hide day details
@@ -109,19 +102,23 @@ export default function ItineraryCard({
         ) : (
           <>
             {/* Activity Preview in Collapsed State */}
-            {day.activities.slice(0, 2).map((activity, idx) => (
-              <div key={idx} className="flex items-start">
-                <i className={`fas ${getActivityIcon(activity.type)} text-gray-500 mt-1 mr-3`}></i>
-                <div>
-                  <p className="font-medium">{activity.title}</p>
-                  <p className="text-sm text-gray-600 line-clamp-1">{activity.description}</p>
+            <div className="space-y-3 mb-2">
+              {day.activities.slice(0, 2).map((activity, idx) => (
+                <div key={idx} className="flex items-start bg-white p-2 rounded-md border border-gray-100">
+                  <div className={`flex-shrink-0 h-7 w-7 rounded-full ${colors.light} flex items-center justify-center mr-2`}>
+                    <i className={`fas ${getActivityIcon(activity.type)} ${colors.text} text-xs`}></i>
+                  </div>
+                  <div className="flex-grow">
+                    <p className="font-medium text-sm">{activity.title}</p>
+                    <p className="text-xs text-gray-600 line-clamp-1">{activity.description}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
             
             {/* See More Button */}
             <button 
-              className={`${colors.text} font-medium flex items-center hover:underline`}
+              className={`${colors.text} font-medium flex items-center hover:underline transition-all`}
               onClick={() => toggleDay(dayIndex)}
             >
               See full day details

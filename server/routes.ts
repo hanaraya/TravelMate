@@ -63,11 +63,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Itinerary not found" });
       }
 
+      // Check if the user correctly identified the AI model
+      // If they picked OpenAI and got OpenAI's itinerary, or they picked Anthropic and got Anthropic's
+      // In this simplified version, we're just matching the model name directly
+      let correct = false;
+      if (choice === 'openai' && itinerary.openAiItinerary?.model?.includes('GPT')) {
+        correct = true;
+      } else if (choice === 'anthropic' && itinerary.anthropicItinerary?.model?.includes('Claude')) {
+        correct = true;
+      }
+
       const updatedItinerary = await storage.updateItinerary(itineraryId, {
         chosenItinerary: choice
       });
 
-      res.status(200).json({ success: true, choice });
+      res.status(200).json({ 
+        success: true, 
+        choice,
+        correct 
+      });
     } catch (error) {
       console.error("Error saving choice:", error);
       res.status(500).json({ error: "Failed to save choice", message: error.message });

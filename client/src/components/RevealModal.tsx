@@ -12,9 +12,14 @@ interface RevealModalProps {
 
 export default function RevealModal({ isOpen, onClose, selectedModel }: RevealModalProps) {
   const [revealed, setRevealed] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
 
   const handleReveal = () => {
     setRevealed(true);
+    // Check if the user guessed correctly - they picked OpenAI and it is OpenAI, or they picked Anthropic and it is Anthropic
+    const correctGuess = (selectedModel === 'openai' && openAiModel.name.includes('GPT')) || 
+                        (selectedModel === 'anthropic' && anthropicModel.name.includes('Claude'));
+    setIsCorrect(correctGuess);
   };
 
   const handleCreateAnother = () => {
@@ -46,6 +51,22 @@ export default function RevealModal({ isOpen, onClose, selectedModel }: RevealMo
             <p className="text-gray-600 text-base font-normal">
               Time to reveal which AI model created your preferred itinerary.
             </p>
+            
+            {revealed && (
+              <div className={`mt-4 text-center p-3 rounded-lg ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                {isCorrect ? (
+                  <div className="flex items-center justify-center">
+                    <i className="fas fa-trophy mr-2 text-yellow-500"></i>
+                    <p className="font-medium">Great job! You correctly identified the AI model!</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <i className="fas fa-surprise mr-2"></i>
+                    <p className="font-medium">Interesting choice! AI models can be tricky to tell apart.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </DialogTitle>
         </DialogHeader>
 
