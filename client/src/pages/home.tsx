@@ -29,7 +29,7 @@ export default function Home() {
     );
     
     // Navigate to the comparison page
-    setLocation(`/comparison?id=${itineraryId}`);
+    setLocation(`/comparison/${itineraryId}`);
   };
 
   return (
