@@ -53,6 +53,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   itineraries: many(itineraries)
 }));
 
+export const promptSchema = z.object({
+  prompt: z.string().min(10, "Please provide a more detailed travel request"),
+});
+
 export const formInputSchema = z.object({
   destination: z.string().min(2, "Destination is required"),
   dates: z.string().min(2, "Travel dates are required"),
@@ -76,6 +80,7 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Itinerary = typeof itineraries.$inferSelect;
 export type InsertItinerary = z.infer<typeof insertItinerarySchema>;
 export type FormInput = z.infer<typeof formInputSchema>;
+export type PromptInput = z.infer<typeof promptSchema>;
 
 export const DAY_STRUCTURE = z.object({
   title: z.string(),

@@ -1,9 +1,10 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { formInputSchema, itineraryResultSchema } from "@shared/schema";
+import { formInputSchema, promptSchema, itineraryResultSchema } from "@shared/schema";
 import { generateOpenAIItinerary } from "./ai/openai";
 import { generateAnthropicItinerary } from "./ai/anthropic";
+import { extractTravelDetailsFromPrompt } from "./ai/prompt-parser";
 import { ZodError } from "zod";
 import * as auth from "./auth";
 
@@ -236,6 +237,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error retrieving model statistics:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       res.status(500).json({ error: "Failed to retrieve model statistics", message: errorMessage });
+    }
+  });
+
+  // API endpoint to generate itineraries from a natural language prompt
+  app.post("/api/generate-itinerary", async (req, res) => {
+    try {
+      // Validate the prompt
+      const { prompt } = promptSchema.parse(req.body);
+      
+      // Extract structured travel details from the prompt using AI
+      const formInput = await extractTravelDetailsFromPrompt(prompt);
+      
+      // Get user ID from session if authenticated
+      const userId = req.session?.userId || null;
+
+      // Create itinerary record
+      const itinerary = await storage.createItinerary({
+        ...formInput,
+        userId,
+        notes: (formInput.notes ? formInput.notes + "\n\nOriginal prompt: " : "Original prompt: ") + prompt
+      });
+
+      // Generate itineraries from both AI models in parallel
+      const [openAiItinerary, anthropicItinerary] = await Promise.all([
+        generateOpenAIItinerary(formInput),
+        generateAnthropicItinerary(formInput)
+      ]);
+
+      // Update itinerary with generated content
+      const updatedItinerary = await storage.updateItinerary(itinerary.id, {
+        openAiItinerary,
+        anthropicItinerary
+      });
+
+      res.status(200).json({
+        id: updatedItinerary?.id,
+        openAiItinerary,
+        anthropicItinerary
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({ error: "Invalid prompt", details: error.errors });
+      } else {
+        console.error("Error generating itineraries from prompt:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: "Failed to generate itineraries", message: errorMessage });
+      }
     }
   });
 

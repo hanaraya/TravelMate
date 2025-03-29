@@ -44,9 +44,47 @@ export default function Comparison() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Check if we have itinerary data in sessionStorage from direct navigation
+  const [cachedItinerary, setCachedItinerary] = useState<{
+    id: number;
+    openAiItinerary: any;
+    anthropicItinerary: any;
+  } | null>(null);
+  
+  useEffect(() => {
+    // Try to get itinerary data from sessionStorage
+    const storedData = sessionStorage.getItem('generatedItineraries');
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        // Check if this is the itinerary we're looking for
+        if (parsedData.id === itineraryId) {
+          setCachedItinerary(parsedData);
+        }
+      } catch (e) {
+        console.error('Error parsing stored itinerary data:', e);
+      }
+    }
+  }, [itineraryId]);
+
   const { data: itinerary, isLoading, error } = useQuery<Itinerary>({
     queryKey: [`/api/itineraries/${itineraryId}`],
-    enabled: !!itineraryId,
+    enabled: !!itineraryId && !cachedItinerary,
+    initialData: cachedItinerary ? {
+      id: cachedItinerary.id,
+      openAiItinerary: cachedItinerary.openAiItinerary,
+      anthropicItinerary: cachedItinerary.anthropicItinerary,
+      destination: cachedItinerary.openAiItinerary.destination || 'Your Destination',
+      dates: '',
+      budget: '',
+      travelers: '',
+      interests: [],
+      userId: null,
+      chosenItinerary: null,
+      createdAt: new Date(),
+      isSaved: false,
+      notes: ''
+    } as Itinerary : undefined
   });
   
   const saveItineraryMutation = useMutation({

@@ -1,12 +1,17 @@
+import { Loader2 } from "lucide-react";
+
 export default function LoadingState({ message = "Our AI experts are crafting your perfect itineraries..." }) {
   return (
-    <div className="text-center py-12">
-      <div className="inline-flex space-x-2">
-        <div className="w-4 h-4 bg-primary rounded-full animate-[bounce_1s_infinite_0.1s]"></div>
-        <div className="w-4 h-4 bg-primary rounded-full animate-[bounce_1s_infinite_0.2s]"></div>
-        <div className="w-4 h-4 bg-primary rounded-full animate-[bounce_1s_infinite_0.3s]"></div>
+    <div className="flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="relative w-16 h-16">
+        <Loader2 className="animate-spin w-16 h-16 text-muted-foreground" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="w-3 h-3 bg-primary rounded-full"></span>
+        </div>
       </div>
-      <p className="mt-4 text-gray-600">{message}</p>
+      <p className="text-muted-foreground max-w-md">
+        {message}
+      </p>
     </div>
   );
 }
