@@ -1,22 +1,19 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
-import createMemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { randomBytes } from "crypto";
+import { storage } from "./storage";
 
 // Set up session secret
 const SESSION_SECRET = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
-
-// Create memory store for sessions
-const MemoryStore = createMemoryStore(session);
 
 // Create Express app
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure session middleware with memory store
+// Configure session middleware with PostgreSQL store
 app.use(session({
   secret: SESSION_SECRET,
   resave: false,
@@ -26,9 +23,7 @@ app.use(session({
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
   },
-  store: new MemoryStore({
-    checkPeriod: 86400000 // prune expired entries every 24h
-  })
+  store: storage.sessionStore
 }));
 
 app.use((req, res, next) => {

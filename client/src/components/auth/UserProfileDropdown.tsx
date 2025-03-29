@@ -88,11 +88,10 @@ export default function UserProfileDropdown() {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => {
           setIsDropdownOpen(false);
-          setLocation('/profile');
-          // TODO: Add anchor to itineraries tab
+          setLocation('/saved-itineraries');
         }}>
-          <i className="fas fa-map-marked-alt mr-2 text-gray-500"></i>
-          My Itineraries
+          <i className="fas fa-bookmark mr-2 text-gray-500"></i>
+          Saved Itineraries
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 

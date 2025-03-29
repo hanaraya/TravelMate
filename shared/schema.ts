@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -27,7 +28,7 @@ export const loginSchema = z.object({
 
 export const itineraries = pgTable("itineraries", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id"),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   destination: text("destination").notNull(),
   dates: text("dates").notNull(),
   budget: text("budget").notNull(),
@@ -37,8 +38,20 @@ export const itineraries = pgTable("itineraries", {
   openAiItinerary: jsonb("openai_itinerary"),
   anthropicItinerary: jsonb("anthropic_itinerary"),
   chosenItinerary: text("chosen_itinerary"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isSaved: boolean("is_saved").default(false),
 });
+
+export const itinerariesRelations = relations(itineraries, ({ one }) => ({
+  user: one(users, {
+    fields: [itineraries.userId],
+    references: [users.id]
+  })
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  itineraries: many(itineraries)
+}));
 
 export const formInputSchema = z.object({
   destination: z.string().min(2, "Destination is required"),
@@ -54,7 +67,8 @@ export const insertItinerarySchema = createInsertSchema(itineraries).omit({
   openAiItinerary: true,
   anthropicItinerary: true,
   chosenItinerary: true,
-  createdAt: true
+  createdAt: true,
+  isSaved: true
 });
 
 export type User = typeof users.$inferSelect;

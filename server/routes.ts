@@ -112,5 +112,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // API endpoint to save an itinerary
+  app.post("/api/itineraries/:id/save", async (req, res) => {
+    try {
+      // Check if user is authenticated
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "You must be logged in to save itineraries" });
+      }
+
+      const itineraryId = parseInt(req.params.id);
+      const itinerary = await storage.getItinerary(itineraryId);
+      
+      if (!itinerary) {
+        return res.status(404).json({ error: "Itinerary not found" });
+      }
+      
+      // Check if the itinerary belongs to the logged-in user
+      if (itinerary.userId !== req.session.userId) {
+        return res.status(403).json({ error: "You can only save your own itineraries" });
+      }
+      
+      const updatedItinerary = await storage.saveItinerary(itineraryId, true);
+      
+      res.status(200).json({ 
+        message: "Itinerary saved successfully", 
+        itinerary: updatedItinerary 
+      });
+    } catch (error) {
+      console.error("Error saving itinerary:", error);
+      res.status(500).json({ error: "Failed to save itinerary", message: error.message });
+    }
+  });
+
+  // API endpoint to unsave an itinerary
+  app.post("/api/itineraries/:id/unsave", async (req, res) => {
+    try {
+      // Check if user is authenticated
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "You must be logged in to manage saved itineraries" });
+      }
+
+      const itineraryId = parseInt(req.params.id);
+      const itinerary = await storage.getItinerary(itineraryId);
+      
+      if (!itinerary) {
+        return res.status(404).json({ error: "Itinerary not found" });
+      }
+      
+      // Check if the itinerary belongs to the logged-in user
+      if (itinerary.userId !== req.session.userId) {
+        return res.status(403).json({ error: "You can only manage your own itineraries" });
+      }
+      
+      const updatedItinerary = await storage.saveItinerary(itineraryId, false);
+      
+      res.status(200).json({ 
+        message: "Itinerary removed from saved list", 
+        itinerary: updatedItinerary 
+      });
+    } catch (error) {
+      console.error("Error updating itinerary:", error);
+      res.status(500).json({ error: "Failed to update itinerary", message: error.message });
+    }
+  });
+
+  // API endpoint to get user's saved itineraries
+  app.get("/api/itineraries/user/saved", async (req, res) => {
+    try {
+      // Check if user is authenticated
+      if (!req.session?.userId) {
+        return res.status(401).json({ error: "You must be logged in to view saved itineraries" });
+      }
+
+      const savedItineraries = await storage.getSavedItineraries(req.session.userId);
+      
+      res.status(200).json(savedItineraries);
+    } catch (error) {
+      console.error("Error retrieving saved itineraries:", error);
+      res.status(500).json({ error: "Failed to retrieve saved itineraries", message: error.message });
+    }
+  });
+
   return httpServer;
 }

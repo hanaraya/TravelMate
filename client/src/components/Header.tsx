@@ -44,9 +44,14 @@ export default function Header() {
                 Home
               </Link>
               {isAuthenticated && (
-                <Link href="/profile" className="font-medium hover:text-primary transition-colors">
-                  My Account
-                </Link>
+                <>
+                  <Link href="/saved-itineraries" className="font-medium hover:text-primary transition-colors">
+                    Saved Itineraries
+                  </Link>
+                  <Link href="/profile" className="font-medium hover:text-primary transition-colors">
+                    My Account
+                  </Link>
+                </>
               )}
             </>
           )}

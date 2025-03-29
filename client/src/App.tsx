@@ -6,6 +6,7 @@ import Home from "@/pages/home";
 import Comparison from "@/pages/comparison";
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/profile";
+import SavedItineraries from "@/pages/saved-itineraries";
 import NotFound from "@/pages/not-found";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/comparison" component={Comparison} />
       <Route path="/auth" component={AuthPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
+      <ProtectedRoute path="/saved-itineraries" component={SavedItineraries} />
       <Route component={NotFound} />
     </Switch>
   );

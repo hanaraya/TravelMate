@@ -12,6 +12,9 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Itinerary } from '@shared/schema';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
+import { BookmarkIcon, CheckIcon } from 'lucide-react';
 
 export default function Comparison() {
   const [, params] = useRoute('/comparison/:id');
@@ -27,6 +30,7 @@ export default function Comparison() {
   
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   useEffect(() => {
     const handleResize = () => {
@@ -43,6 +47,50 @@ export default function Comparison() {
   const { data: itinerary, isLoading, error } = useQuery<Itinerary>({
     queryKey: [`/api/itineraries/${itineraryId}`],
     enabled: !!itineraryId,
+  });
+  
+  const saveItineraryMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/itineraries/${itineraryId}/save`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/itineraries/${itineraryId}`] });
+      toast({
+        title: "Success",
+        description: "Itinerary saved successfully!",
+        variant: "default",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to save itinerary: ${error.message}`,
+        variant: 'destructive',
+      });
+    }
+  });
+  
+  const unsaveItineraryMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/itineraries/${itineraryId}/unsave`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/itineraries/${itineraryId}`] });
+      toast({
+        title: "Success",
+        description: "Itinerary removed from saved list",
+        variant: "default",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to update itinerary: ${error.message}`,
+        variant: 'destructive',
+      });
+    }
   });
 
   const recordChoiceMutation = useMutation({
@@ -158,6 +206,33 @@ export default function Comparison() {
                   <span>You've made your guess! See how the AIs compared.</span>
                 )}
               </p>
+              
+              {/* Save button - only visible for logged-in users and only after the choice is made */}
+              {user && choiceMade && (
+                <div className="mt-6">
+                  {itinerary.isSaved ? (
+                    <Button
+                      onClick={() => unsaveItineraryMutation.mutate()}
+                      variant="outline"
+                      className="flex items-center gap-2 mx-auto shadow-sm"
+                      disabled={unsaveItineraryMutation.isPending}
+                    >
+                      <CheckIcon className="h-4 w-4" />
+                      Saved to Your Collection
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => saveItineraryMutation.mutate()}
+                      variant="default"
+                      className="flex items-center gap-2 mx-auto shadow-sm"
+                      disabled={saveItineraryMutation.isPending}
+                    >
+                      <BookmarkIcon className="h-4 w-4" />
+                      Save This Itinerary
+                    </Button>
+                  )}
+                </div>
+              )}
             </motion.div>
           </div>
           

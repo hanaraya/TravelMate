@@ -1,4 +1,18 @@
-import { users, type User, type InsertUser, type Itinerary, type InsertItinerary, itineraries } from "@shared/schema";
+import { 
+  users, 
+  itineraries, 
+  type User, 
+  type InsertUser, 
+  type Itinerary, 
+  type InsertItinerary 
+} from "@shared/schema";
+import { db } from "./db";
+import { eq, and, desc } from "drizzle-orm";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
+
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -10,101 +24,103 @@ export interface IStorage {
   getItinerary(id: number): Promise<Itinerary | undefined>;
   updateItinerary(id: number, updates: Partial<Itinerary>): Promise<Itinerary | undefined>;
   getItinerariesByUserId(userId: number): Promise<Itinerary[]>;
+  saveItinerary(id: number, save: boolean): Promise<Itinerary | undefined>;
+  getSavedItineraries(userId: number): Promise<Itinerary[]>;
+  sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private itineraries: Map<number, Itinerary>;
-  userCurrentId: number;
-  itineraryCurrentId: number;
+export class DatabaseStorage implements IStorage {
+  sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.itineraries = new Map();
-    this.userCurrentId = 1;
-    this.itineraryCurrentId = 1;
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
+    });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
   
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userCurrentId++;
-    const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id,
-      createdAt: now,
-      lastLogin: null,
-      profilePicture: null
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
   
   async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
-    const user = this.users.get(id);
-    if (!user) return undefined;
+    const [updatedUser] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
     
-    const updatedUser = { ...user, ...updates };
-    this.users.set(id, updatedUser);
     return updatedUser;
   }
 
   async createItinerary(insertItinerary: InsertItinerary): Promise<Itinerary> {
-    const id = this.itineraryCurrentId++;
-    const now = new Date();
+    const [itinerary] = await db
+      .insert(itineraries)
+      .values(insertItinerary)
+      .returning();
     
-    // Ensure nullable fields have proper values
-    const userId = insertItinerary.userId ?? null;
-    const notes = insertItinerary.notes ?? null;
-    
-    const itinerary: Itinerary = { 
-      ...insertItinerary,
-      userId,
-      notes, 
-      id, 
-      openAiItinerary: null, 
-      anthropicItinerary: null, 
-      chosenItinerary: null,
-      createdAt: now
-    };
-    
-    this.itineraries.set(id, itinerary);
     return itinerary;
   }
 
   async getItinerary(id: number): Promise<Itinerary | undefined> {
-    return this.itineraries.get(id);
+    const [itinerary] = await db.select().from(itineraries).where(eq(itineraries.id, id));
+    return itinerary;
   }
 
   async updateItinerary(id: number, updates: Partial<Itinerary>): Promise<Itinerary | undefined> {
-    const itinerary = this.itineraries.get(id);
-    if (!itinerary) return undefined;
+    const [updatedItinerary] = await db
+      .update(itineraries)
+      .set(updates)
+      .where(eq(itineraries.id, id))
+      .returning();
     
-    const updatedItinerary = { ...itinerary, ...updates };
-    this.itineraries.set(id, updatedItinerary);
     return updatedItinerary;
   }
 
   async getItinerariesByUserId(userId: number): Promise<Itinerary[]> {
-    return Array.from(this.itineraries.values()).filter(
-      (itinerary) => itinerary.userId === userId
-    );
+    return db
+      .select()
+      .from(itineraries)
+      .where(eq(itineraries.userId, userId))
+      .orderBy(desc(itineraries.createdAt));
+  }
+
+  async saveItinerary(id: number, save: boolean): Promise<Itinerary | undefined> {
+    const [updatedItinerary] = await db
+      .update(itineraries)
+      .set({ isSaved: save })
+      .where(eq(itineraries.id, id))
+      .returning();
+    
+    return updatedItinerary;
+  }
+
+  async getSavedItineraries(userId: number): Promise<Itinerary[]> {
+    return db
+      .select()
+      .from(itineraries)
+      .where(and(
+        eq(itineraries.userId, userId),
+        eq(itineraries.isSaved, true)
+      ))
+      .orderBy(desc(itineraries.createdAt));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
