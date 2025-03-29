@@ -50,11 +50,11 @@ export async function generateRandomItineraries(
   const failedModels = new Set<string>();
   const [model1, model2] = selectRandomModels();
 
-  // Try first selected model
-  const result1 = await tryGenerateItinerary(model1, formInput, failedModels);
-
-  // Try second selected model
-  const result2 = await tryGenerateItinerary(model2, formInput, failedModels);
+  // Try both selected models in parallel
+  const [result1, result2] = await Promise.all([
+    tryGenerateItinerary(model1, formInput, failedModels),
+    tryGenerateItinerary(model2, formInput, failedModels)
+  ]);
 
   // If both initial models worked, return their results
   if (result1 && result2) {
