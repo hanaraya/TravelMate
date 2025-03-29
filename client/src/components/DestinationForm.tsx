@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { FormInput, formInputSchema } from "@shared/schema";
@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export default function DestinationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const form = useForm<FormInput>({
@@ -49,12 +49,12 @@ export default function DestinationForm() {
         description: "Your AI travel itineraries are ready to explore.",
       });
 
-      navigate(`/comparison/${result.id}`);
+      setLocation(`/comparison/${result.id}`);
     } catch (error) {
       console.error("Error generating itineraries:", error);
       toast({
         title: "Generation Failed",
-        description: error.message || "Could not generate itineraries. Please try again.",
+        description: error instanceof Error ? error.message : "Could not generate itineraries. Please try again.",
         variant: "destructive",
       });
     } finally {

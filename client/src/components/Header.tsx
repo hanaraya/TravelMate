@@ -6,10 +6,8 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <div className="flex items-center">
           <i className="fas fa-route text-primary text-2xl mr-2"></i>
-          <Link href="/">
-            <a className="font-heading font-bold text-xl sm:text-2xl text-primary">
-              Itinerary<span className="text-orange-500">AI</span>
-            </a>
+          <Link href="/" className="font-heading font-bold text-xl sm:text-2xl text-primary">
+            Itinerary<span className="text-orange-500">AI</span>
           </Link>
         </div>
         <nav className="hidden md:flex space-x-8">
