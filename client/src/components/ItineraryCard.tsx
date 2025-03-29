@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { ItineraryResult, Day } from '@shared/schema';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { motion } from 'framer-motion';
 import { HIGHLIGHT_COLORS } from '@/lib/constants';
 
 interface ItineraryCardProps {
@@ -147,67 +150,143 @@ export default function ItineraryCard({
   };
 
   return (
-    <Card className="border overflow-hidden shadow-md bg-white hover:shadow-lg transition-shadow">
-      <CardHeader className={`p-4 text-white ${bgGradient}`}>
-        <div className="flex justify-between items-center">
+    <Card className="border overflow-hidden shadow-lg bg-white hover:shadow-xl transition-shadow h-full flex flex-col">
+      <CardHeader className={`p-5 text-white ${bgGradient} relative overflow-hidden`}>
+        <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+          <i className="fas fa-map-marked-alt text-8xl absolute -top-4 -right-4 transform rotate-12"></i>
+        </div>
+        
+        <div className="flex justify-between items-center z-10 relative">
           <div>
-            <h3 className="font-heading font-semibold text-xl">
+            <motion.h3 
+              className="font-heading font-bold text-2xl mb-1"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
               Itinerary {type === 'openai' ? 'A' : 'B'}
-            </h3>
-            <p className="text-sm opacity-90">
-              AI Expert {type === 'openai' ? 'A' : 'B'}
-              {revealed && (
-                <span className="ml-2 font-bold">({itinerary.model})</span>
-              )}
-            </p>
+            </motion.h3>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <p className="text-sm opacity-90 flex items-center">
+                <i className="fas fa-brain mr-2"></i>
+                AI Expert {type === 'openai' ? 'A' : 'B'}
+                {revealed && (
+                  <Badge variant="outline" className="ml-2 bg-white/20 font-semibold">
+                    {itinerary.model}
+                  </Badge>
+                )}
+              </p>
+            </motion.div>
           </div>
-          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-            <i className="fas fa-robot text-xl"></i>
-          </div>
+          
+          <motion.div 
+            className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm shadow-inner"
+            whileHover={{ scale: 1.05, rotate: 5 }}
+          >
+            <i className="fas fa-robot text-2xl"></i>
+          </motion.div>
         </div>
       </CardHeader>
       
-      <CardContent className="p-5">
+      <CardContent className="p-5 flex-grow overflow-auto">
         {/* Summary */}
-        <div className="mb-6">
+        <div className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+          <h4 className="text-lg font-semibold mb-2 flex items-center">
+            <i className={`fas fa-clipboard-list ${colors.text} mr-2`}></i>
+            Summary
+          </h4>
           <p className="text-gray-600">{itinerary.summary}</p>
         </div>
         
-        {/* Highlights */}
-        <div className="mb-6">
-          <h4 className="text-lg font-semibold mb-2">Highlights</h4>
-          <ul className="space-y-1">
-            {itinerary.highlights.map((highlight, idx) => (
-              <li key={idx} className="flex items-start">
-                <i className="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
-                <span>{highlight}</span>
-              </li>
-            ))}
-          </ul>
+        {/* Focus and Rating */}
+        <div className="mb-6 flex flex-wrap gap-3">
+          <Badge variant="outline" className={`px-3 py-1 ${colors.light} ${colors.text} text-sm font-medium flex items-center`}>
+            <i className="fas fa-bullseye mr-1.5"></i>
+            {itinerary.focus}
+          </Badge>
+          
+          <Badge variant="outline" className="px-3 py-1 bg-amber-50 text-amber-600 text-sm font-medium flex items-center">
+            <i className="fas fa-star mr-1.5 text-yellow-400"></i>
+            {itinerary.rating?.toFixed(1) || "4.0"} Rating
+          </Badge>
         </div>
         
-        {/* Days */}
-        {itinerary.days.map((day, dayIndex) => (
-          <div key={dayIndex} className={dayIndex < itinerary.days.length - 1 ? "mb-8" : ""}>
-            <div className="flex items-center mb-3">
-              <div className={`w-8 h-8 rounded-full ${colors.light} flex items-center justify-center ${colors.text} font-bold mr-3`}>
-                {dayIndex + 1}
-              </div>
-              <h4 className="font-heading font-semibold text-lg">{day.title}</h4>
-            </div>
-            {renderDayActivities(day, dayIndex)}
+        {/* Highlights */}
+        <motion.div 
+          className="mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <h4 className="text-lg font-semibold mb-3 flex items-center">
+            <i className={`fas fa-award ${colors.text} mr-2`}></i>
+            Highlights
+          </h4>
+          <div className="grid gap-2 grid-cols-1">
+            {itinerary.highlights.map((highlight, idx) => (
+              <motion.div 
+                key={idx} 
+                className="flex items-start p-3 rounded-lg bg-gray-50 border border-gray-100"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * idx }}
+              >
+                <div className={`flex-shrink-0 h-8 w-8 rounded-full ${colors.light} flex items-center justify-center mr-3`}>
+                  <i className="fas fa-check text-green-500"></i>
+                </div>
+                <p className="text-gray-700">{highlight}</p>
+              </motion.div>
+            ))}
           </div>
-        ))}
+        </motion.div>
+        
+        <Separator className="my-6" />
+        
+        {/* Days */}
+        <h4 className="text-lg font-semibold mb-4 flex items-center">
+          <i className={`fas fa-calendar-alt ${colors.text} mr-2`}></i>
+          Daily Itinerary
+        </h4>
+        
+        <div className="space-y-6">
+          {itinerary.days.map((day, dayIndex) => (
+            <motion.div 
+              key={dayIndex} 
+              className={`p-4 rounded-xl border ${colors.borderLight}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * dayIndex }}
+            >
+              <div className="flex items-center mb-3">
+                <div className={`w-10 h-10 rounded-full ${colors.light} flex items-center justify-center ${colors.text} font-bold mr-3 shadow-sm`}>
+                  {dayIndex + 1}
+                </div>
+                <h4 className="font-heading font-semibold text-lg">{day.title}</h4>
+              </div>
+              
+              {renderDayActivities(day, dayIndex)}
+            </motion.div>
+          ))}
+        </div>
         
         {/* Tips */}
         {itinerary.tips && itinerary.tips.length > 0 && (
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-            <h4 className="font-semibold mb-2">Travel Tips</h4>
-            <ul className="space-y-2">
+          <div className="mt-8 p-5 rounded-xl bg-orange-50 border border-orange-100">
+            <h4 className="font-semibold mb-3 flex items-center text-orange-700">
+              <i className="fas fa-lightbulb text-orange-500 mr-2"></i>
+              Travel Tips
+            </h4>
+            <ul className="space-y-3">
               {itinerary.tips.map((tip, idx) => (
-                <li key={idx} className="flex items-start">
-                  <i className="fas fa-lightbulb text-yellow-500 mt-1 mr-2"></i>
-                  <span className="text-sm">{tip}</span>
+                <li key={idx} className="flex items-start bg-white p-3 rounded-lg shadow-sm">
+                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mr-3">
+                    {idx + 1}
+                  </div>
+                  <span className="text-sm text-gray-700">{tip}</span>
                 </li>
               ))}
             </ul>
@@ -215,28 +294,21 @@ export default function ItineraryCard({
         )}
       </CardContent>
       
-      <CardFooter className="bg-gray-50 p-4 border-t border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 w-full">
-          <div>
-            <div className="flex items-center mb-1">
-              <i className="fas fa-tag text-gray-500 mr-2"></i>
-              <span className="text-sm font-medium">{itinerary.focus}</span>
-            </div>
-            <div className="flex items-center">
-              {Array.from({ length: Math.floor(itinerary.rating || 4) }).map((_, i) => (
-                <i key={i} className="fas fa-star text-yellow-400"></i>
-              ))}
-              {itinerary.rating && itinerary.rating % 1 !== 0 && (
-                <i className="fas fa-star-half-alt text-yellow-400"></i>
-              )}
-            </div>
-          </div>
+      <CardFooter className={`p-5 border-t ${type === 'openai' ? 'bg-blue-50 border-blue-100' : 'bg-teal-50 border-teal-100'}`}>
+        <div className="w-full">
           <Button 
-            className={`w-full sm:w-auto ${type === 'openai' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-teal-600 hover:bg-teal-700'} text-white`}
+            className={`w-full ${type === 'openai' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-teal-600 hover:bg-teal-700'} text-white py-6 rounded-xl text-lg font-medium shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5`}
             onClick={() => onSelectItinerary(type)}
           >
+            <i className="fas fa-check-circle mr-2"></i>
             Choose This Itinerary
           </Button>
+          
+          {revealed && (
+            <p className="text-center mt-3 text-sm text-gray-600">
+              This itinerary was created by {itinerary.model || (type === 'openai' ? 'GPT-4' : 'Claude')}
+            </p>
+          )}
         </div>
       </CardFooter>
     </Card>

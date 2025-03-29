@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRoute } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import ReactConfetti from 'react-confetti';
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ItineraryCard from '@/components/ItineraryCard';
@@ -114,6 +115,7 @@ export default function Comparison() {
 
   const isGenerating = !itinerary.openAiItinerary || !itinerary.anthropicItinerary;
   const choiceMade = !!itinerary.chosenItinerary;
+  const revealed = choiceMade;
 
   return (
     <div className="min-h-screen flex flex-col relative">
@@ -131,30 +133,66 @@ export default function Comparison() {
       
       <Header />
       
-      <main className="flex-grow bg-white py-16">
+      <main className="flex-grow bg-gradient-to-b from-gray-50 to-white py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="font-heading font-bold text-3xl mb-4">Your AI Itineraries</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Our AI experts have crafted two unique itineraries for your trip to{' '}
-              <span className="font-medium">{itinerary.destination}</span>. 
-              {!choiceMade ? (
-                <span> Compare them and guess which AI created which itinerary!</span>
-              ) : (
-                <span> You've made your guess! See how well you did.</span>
-              )}
-            </p>
+          <div className="bg-white rounded-2xl shadow-md p-8 mb-12 text-center max-w-4xl mx-auto border border-gray-100">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-block bg-primary/10 text-primary font-medium px-4 py-2 rounded-full mb-4">
+                <i className="fas fa-map-marked-alt mr-2"></i>
+                {itinerary.destination}
+              </div>
+              <h2 className="font-heading font-bold text-4xl mb-4">Your AI Itineraries</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Our AI experts have crafted two unique itineraries for your trip{' '}
+                <span className="font-medium">from {itinerary.dates}</span>.{' '}
+                {!choiceMade ? (
+                  <span>
+                    <strong className="text-primary">Can you guess which AI created which itinerary?</strong>{' '}
+                    Compare them and make your best guess!
+                  </span>
+                ) : (
+                  <span>You've made your guess! See how the AIs compared.</span>
+                )}
+              </p>
+            </motion.div>
           </div>
           
           {isGenerating ? (
             <LoadingState />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mb-10">
               {/* Itinerary A - OpenAI */}
-              <div className="card-container flex flex-col h-full">
-                <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-t-lg">
-                  <h3 className="text-xl font-semibold text-center mb-2">Itinerary A</h3>
+              <motion.div 
+                className="flex flex-col h-full"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 rounded-t-2xl text-white shadow-md relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 opacity-10">
+                    <i className="fas fa-robot text-9xl absolute -top-6 -right-6 transform rotate-12"></i>
+                  </div>
+                  <div className="relative z-10 flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner backdrop-blur-sm">
+                      <span className="text-white font-bold text-xl">A</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-1">AI Expert A</h3>
+                      <p className="text-white/80 text-sm">
+                        {revealed ? (
+                          <span className="font-medium">{itinerary.openAiItinerary?.model || "GPT-4"}</span>
+                        ) : (
+                          <span>Guess which AI created this itinerary</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+                
                 <div className="flex-grow">
                   <ItineraryCard 
                     itinerary={itinerary.openAiItinerary}
@@ -163,13 +201,36 @@ export default function Comparison() {
                     revealed={choiceMade}
                   />
                 </div>
-              </div>
+              </motion.div>
               
               {/* Itinerary B - Anthropic */}
-              <div className="card-container flex flex-col h-full">
-                <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-t-lg">
-                  <h3 className="text-xl font-semibold text-center mb-2">Itinerary B</h3>
+              <motion.div 
+                className="flex flex-col h-full"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="bg-gradient-to-r from-teal-600 to-teal-700 p-5 rounded-t-2xl text-white shadow-md relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-40 h-40 opacity-10">
+                    <i className="fas fa-brain text-9xl absolute -top-6 -right-6 transform rotate-12"></i>
+                  </div>
+                  <div className="relative z-10 flex items-center">
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mr-4 shadow-inner backdrop-blur-sm">
+                      <span className="text-white font-bold text-xl">B</span>
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold mb-1">AI Expert B</h3>
+                      <p className="text-white/80 text-sm">
+                        {revealed ? (
+                          <span className="font-medium">{itinerary.anthropicItinerary?.model || "Claude"}</span>
+                        ) : (
+                          <span>Guess which AI created this itinerary</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+                
                 <div className="flex-grow">
                   <ItineraryCard 
                     itinerary={itinerary.anthropicItinerary}
@@ -178,6 +239,17 @@ export default function Comparison() {
                     revealed={choiceMade}
                   />
                 </div>
+              </motion.div>
+            </div>
+          )}
+          
+          {!choiceMade && !isGenerating && (
+            <div className="text-center mb-16">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg inline-block mb-6">
+                <p className="text-amber-700 font-medium flex items-center">
+                  <i className="fas fa-lightbulb text-amber-500 mr-2"></i>
+                  Choose the itinerary you think is best and see which AI created it!
+                </p>
               </div>
             </div>
           )}

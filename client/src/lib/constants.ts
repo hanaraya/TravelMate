@@ -30,14 +30,16 @@ export const HIGHLIGHT_COLORS = {
     secondary: "bg-blue-500",
     light: "bg-blue-100",
     text: "text-blue-600",
-    border: "border-blue-500"
+    border: "border-blue-500",
+    borderLight: "border-blue-200"
   },
   anthropic: {
     primary: "bg-teal-600",
     secondary: "bg-teal-500",
     light: "bg-teal-100",
     text: "text-teal-600",
-    border: "border-teal-500"
+    border: "border-teal-500",
+    borderLight: "border-teal-200"
   }
 };
 
