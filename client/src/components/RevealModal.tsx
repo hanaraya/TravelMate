@@ -9,11 +9,19 @@ interface RevealModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedModel: 'openai' | 'anthropic' | null;
+  actualModel?: string; // The actual AI model name from the API
+  isCorrectGuess?: boolean; // Whether the user guessed correctly
 }
 
-export default function RevealModal({ isOpen, onClose, selectedModel }: RevealModalProps) {
+export default function RevealModal({ 
+  isOpen, 
+  onClose, 
+  selectedModel, 
+  actualModel = '', 
+  isCorrectGuess = false 
+}: RevealModalProps) {
   const [revealed, setRevealed] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(isCorrectGuess);
 
   useEffect(() => {
     if (!isOpen) {
@@ -26,10 +34,16 @@ export default function RevealModal({ isOpen, onClose, selectedModel }: RevealMo
 
   const handleReveal = () => {
     setRevealed(true);
-    // Check if the user guessed correctly - they picked OpenAI and it is OpenAI, or they picked Anthropic and it is Anthropic
-    const correctGuess = (selectedModel === 'openai' && openAiModel.name.includes('GPT')) || 
-                        (selectedModel === 'anthropic' && anthropicModel.name.includes('Claude'));
-    setIsCorrect(correctGuess);
+    // If actualModel is provided from API, use isCorrectGuess,
+    // otherwise fall back to the hardcoded logic
+    if (actualModel) {
+      setIsCorrect(isCorrectGuess);
+    } else {
+      // Legacy fallback behavior
+      const correctGuess = (selectedModel === 'openai' && openAiModel.name.includes('GPT')) || 
+                          (selectedModel === 'anthropic' && anthropicModel.name.includes('Claude'));
+      setIsCorrect(correctGuess);
+    }
   };
 
   const handleCreateAnother = () => {
@@ -132,10 +146,12 @@ export default function RevealModal({ isOpen, onClose, selectedModel }: RevealMo
                 {revealed && (
                   <div className="text-center mb-4">
                     <h3 className={`font-bold text-xl ${selectedModel === 'openai' ? 'text-blue-600' : 'text-teal-600'}`}>
-                      {selectedModel === 'openai' ? 'GPT-4o' : 'Claude 3.7 Sonnet'}
+                      {actualModel ? actualModel : (selectedModel === 'openai' ? 'GPT-4o' : 'Claude 3.7 Sonnet')}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {selectedModel === 'openai' 
+                      {actualModel && actualModel.includes("Gemini") ? "Google's advanced language model" :
+                       actualModel && actualModel.includes("Grok") ? "xAI's conversational AI" :
+                       selectedModel === 'openai' 
                         ? "OpenAI's advanced language model" 
                         : "Anthropic's most capable AI assistant"}
                     </p>
@@ -228,9 +244,15 @@ export default function RevealModal({ isOpen, onClose, selectedModel }: RevealMo
                 {revealed && (
                   <div className="text-center mb-4">
                     <h3 className={`font-bold text-xl ${selectedModel !== 'openai' ? 'text-blue-500' : 'text-teal-500'}`}>
-                      {selectedModel !== 'openai' ? 'GPT-4o' : 'Claude 3.7 Sonnet'}
+                      {/* Use opposite of selectedModel - for the "other" model card */}
+                      {actualModel ? (
+                        selectedModel === 'openai' ? 'Claude 3.7 Sonnet' : 'GPT-4o'
+                      ) : (
+                        selectedModel !== 'openai' ? 'GPT-4o' : 'Claude 3.7 Sonnet'
+                      )}
                     </h3>
                     <p className="text-sm text-gray-600">
+                      {/* Use opposite of selectedModel for description */}
                       {selectedModel !== 'openai' 
                         ? "OpenAI's advanced language model" 
                         : "Anthropic's most capable AI assistant"}
@@ -290,9 +312,14 @@ export default function RevealModal({ isOpen, onClose, selectedModel }: RevealMo
                 <div>
                   <p className="font-medium text-blue-800 mb-1">Did you know?</p>
                   <p className="text-sm text-gray-700">
-                    Different AI models have distinct approaches to creating itineraries. GPT-4o often excels at creating diverse, 
-                    creative suggestions, while Claude 3.7 Sonnet frequently provides more detailed and structured guidance.
-                    Which did you prefer?
+                    Different AI models have distinct approaches to creating itineraries:
+                    <ul className="mt-2 list-disc pl-4 space-y-1 text-sm">
+                      <li>GPT-4o often excels at creating diverse, creative suggestions</li>
+                      <li>Claude 3.7 Sonnet frequently provides more detailed and structured guidance</li>
+                      <li>Gemini Pro offers balanced recommendations with cultural insights</li>
+                      <li>Grok has strong contextual understanding with conversational responses</li>
+                    </ul>
+                    <p className="mt-2">Which approach did you prefer?</p>
                   </p>
                 </div>
               </div>

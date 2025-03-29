@@ -23,6 +23,8 @@ export default function Comparison() {
   const [selectedModel, setSelectedModel] = useState<'openai' | 'anthropic' | null>(null);
   const [showRevealModal, setShowRevealModal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [actualModel, setActualModel] = useState<string>('');
+  const [isCorrectGuess, setIsCorrectGuess] = useState(false);
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 0,
     height: typeof window !== 'undefined' ? window.innerHeight : 0
@@ -146,6 +148,12 @@ export default function Comparison() {
         setTimeout(() => setShowConfetti(false), 5000);
       }
       
+      // Store the actualModel from the response if available
+      if (data.actualModel) {
+        setActualModel(data.actualModel);
+      }
+      
+      setIsCorrectGuess(data.correct || false);
       setShowRevealModal(true);
     },
     onError: (error) => {
@@ -329,6 +337,8 @@ export default function Comparison() {
         isOpen={showRevealModal} 
         onClose={() => setShowRevealModal(false)} 
         selectedModel={selectedModel}
+        actualModel={actualModel}
+        isCorrectGuess={isCorrectGuess}
       />
     </div>
   );

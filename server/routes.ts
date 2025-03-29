@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { formInputSchema, promptSchema, itineraryResultSchema } from "@shared/schema";
 import { generateOpenAIItinerary } from "./ai/openai";
 import { generateAnthropicItinerary } from "./ai/anthropic";
+import { generateGeminiItinerary } from "./ai/gemini";
+import { generateGrokItinerary } from "./ai/grok";
+import { generateRandomItineraries, generateItineraryWithFallback } from "./ai/selector";
 import { extractTravelDetailsFromPrompt } from "./ai/prompt-parser";
 import { ZodError } from "zod";
 import * as auth from "./auth";
@@ -72,16 +75,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Itinerary not found" });
       }
 
-      // Check if the user correctly identified the AI model
-      // If they picked OpenAI and got OpenAI's itinerary, or they picked Anthropic and got Anthropic's
-      // In this simplified version, we're just matching the model name directly
+      // Determine which itinerary the user selected (first or second)
+      const selectedItinerary = choice === 'openai' ? itinerary.openAiItinerary : itinerary.anthropicItinerary;
+      
+      if (!selectedItinerary || typeof selectedItinerary !== 'object' || !('model' in selectedItinerary)) {
+        return res.status(400).json({ error: "Selected itinerary is not valid" });
+      }
+      
+      // Extract the actual model name, handling the fallback case
+      const actualModelName = String(selectedItinerary.model);
+      
+      // Check if the user correctly identified the AI model family
       let correct = false;
-      if (choice === 'openai' && typeof itinerary.openAiItinerary === 'object' && itinerary.openAiItinerary && 'model' in itinerary.openAiItinerary && 
-          typeof itinerary.openAiItinerary.model === 'string' && itinerary.openAiItinerary.model.includes('GPT')) {
+      
+      // Define model family mappings
+      const modelFamilies = {
+        'openai': ['GPT', 'OpenAI'],
+        'anthropic': ['Claude', 'Anthropic'],
+        // These would map to openai or anthropic in the choice
+        'gemini': ['Gemini'],
+        'grok': ['Grok']
+      };
+      
+      // Check for exact match first (for core models)
+      if ((choice === 'openai' && actualModelName.includes('OpenAI')) || 
+          (choice === 'anthropic' && actualModelName.includes('Anthropic'))) {
         correct = true;
-      } else if (choice === 'anthropic' && typeof itinerary.anthropicItinerary === 'object' && itinerary.anthropicItinerary && 
-                 'model' in itinerary.anthropicItinerary && typeof itinerary.anthropicItinerary.model === 'string' && 
-                 itinerary.anthropicItinerary.model.includes('Claude')) {
+      } 
+      // Check for model-specific keyword matches
+      else if ((choice === 'openai' && actualModelName.includes('GPT')) || 
+               (choice === 'anthropic' && actualModelName.includes('Claude'))) {
+        correct = true;
+      }
+      // Check for Gemini/Grok (user would select based on the interface showing just openai/anthropic)
+      else if (actualModelName.includes('Gemini') || actualModelName.includes('Grok')) {
+        // For Gemini and Grok, we treat them as "wild cards"
+        // We consider the guess correct - this rewards exploration of the new models
+        // Alternatively, we could randomly assign correct/incorrect since it's a true guess
+        correct = true;
+      }
+      
+      // Handle fallback cases more carefully
+      if (actualModelName.includes('fallback')) {
+        // Example: "Anthropic (fallback from OpenAI)"
+        // In this case, the user might reasonably guess either model, so we're generous
         correct = true;
       }
 
@@ -92,7 +129,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ 
         success: true, 
         choice,
-        correct 
+        correct,
+        actualModel: actualModelName // Return the actual model for UI display
       });
     } catch (error) {
       console.error("Error saving choice:", error);
@@ -259,23 +297,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: (formInput.notes ? formInput.notes + "\n\nOriginal prompt: " : "Original prompt: ") + prompt
       });
 
-      // Generate itineraries from both AI models in parallel
-      const [openAiItinerary, anthropicItinerary] = await Promise.all([
-        generateOpenAIItinerary(formInput),
-        generateAnthropicItinerary(formInput)
-      ]);
+      try {
+        // Generate itineraries using the random AI selector with fallback support
+        const [itinerary1, itinerary2] = await generateRandomItineraries(formInput);
+        
+        // Store the generated itineraries - map them to the existing openAI and anthropic fields 
+        // for now for database compatibility
+        const updatedItinerary = await storage.updateItinerary(itinerary.id, {
+          openAiItinerary: itinerary1,
+          anthropicItinerary: itinerary2
+        });
 
-      // Update itinerary with generated content
-      const updatedItinerary = await storage.updateItinerary(itinerary.id, {
-        openAiItinerary,
-        anthropicItinerary
-      });
+        res.status(200).json({
+          id: updatedItinerary?.id,
+          openAiItinerary: itinerary1,
+          anthropicItinerary: itinerary2
+        });
+      } catch (aiError) {
+        // If the random selection fails, fall back to fixed OpenAI + Anthropic
+        console.warn("Random AI selection failed, falling back to fixed model selection:", aiError);
+        
+        // Generate itineraries from both AI models in parallel
+        const [openAiItinerary, anthropicItinerary] = await Promise.all([
+          generateItineraryWithFallback("OpenAI", formInput),
+          generateItineraryWithFallback("Anthropic", formInput, "OpenAI")
+        ]);
 
-      res.status(200).json({
-        id: updatedItinerary?.id,
-        openAiItinerary,
-        anthropicItinerary
-      });
+        // Update itinerary with generated content
+        const updatedItinerary = await storage.updateItinerary(itinerary.id, {
+          openAiItinerary,
+          anthropicItinerary
+        });
+
+        res.status(200).json({
+          id: updatedItinerary?.id,
+          openAiItinerary,
+          anthropicItinerary
+        });
+      }
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({ error: "Invalid prompt", details: error.errors });
