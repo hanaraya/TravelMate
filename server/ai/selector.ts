@@ -63,9 +63,19 @@ export async function generateItineraryWithFallback(
   } catch (primaryError: unknown) {
     console.error(`Error with primary model ${model}:`, primaryError);
     
+    // Special handling for Anthropic overload
+    const isAnthropicOverload = primaryError instanceof Error && 
+      primaryError.message.includes('529') && 
+      primaryError.message.includes('overloaded_error');
+    
     // Try each fallback model in sequence
     for (const fallbackModel of fallbackModels) {
       try {
+        // Skip Anthropic if we're in an overload situation
+        if (isAnthropicOverload && fallbackModel === 'Anthropic') {
+          continue;
+        }
+        
         console.log(`Attempting fallback with ${fallbackModel}...`);
         const result = await MODEL_GENERATORS[fallbackModel](formInput);
         // Override the model name in the result to maintain transparency
