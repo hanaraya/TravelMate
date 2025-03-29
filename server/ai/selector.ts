@@ -1,4 +1,3 @@
-
 import { type FormInput, type ItineraryResult } from "@shared/schema";
 import { generateOpenAIItinerary } from "./openai";
 import { generateAnthropicItinerary } from "./anthropic";
@@ -50,28 +49,28 @@ export async function generateRandomItineraries(
 ): Promise<[ItineraryResult, ItineraryResult]> {
   const failedModels = new Set<string>();
   const [model1, model2] = selectRandomModels();
-  
+
   // Try first selected model
   const result1 = await tryGenerateItinerary(model1, formInput, failedModels);
-  
+
   // Try second selected model
   const result2 = await tryGenerateItinerary(model2, formInput, failedModels);
-  
+
   // If both initial models worked, return their results
   if (result1 && result2) {
     return [result1, result2];
   }
-  
+
   // Try remaining models as fallbacks
   const remainingModels = AI_MODELS.filter(model => 
     model !== model1 && 
     model !== model2 && 
     !failedModels.has(model)
   );
-  
+
   let finalResult1 = result1;
   let finalResult2 = result2;
-  
+
   // If first result failed, try fallbacks
   if (!finalResult1) {
     for (const fallbackModel of remainingModels) {
@@ -83,14 +82,14 @@ export async function generateRandomItineraries(
       }
     }
   }
-  
+
   // If second result failed, try remaining fallbacks
   if (!finalResult2) {
     const unusedModels = AI_MODELS.filter(model => 
       !failedModels.has(model) && 
       (finalResult1?.model !== model)
     );
-    
+
     for (const fallbackModel of unusedModels) {
       const fallbackResult = await tryGenerateItinerary(fallbackModel, formInput, failedModels);
       if (fallbackResult) {
@@ -100,7 +99,7 @@ export async function generateRandomItineraries(
       }
     }
   }
-  
+
   // If we still don't have two results but have at least one, duplicate it
   if (finalResult1 && !finalResult2) {
     finalResult2 = { ...finalResult1 };
@@ -109,11 +108,29 @@ export async function generateRandomItineraries(
     finalResult1 = { ...finalResult2 };
     finalResult1.model = `${finalResult2.model} (copy due to other models failing)`;
   }
-  
+
   // If all models failed, throw error
   if (!finalResult1 || !finalResult2) {
     throw new Error("All AI models failed to generate itineraries");
   }
-  
+
   return [finalResult1, finalResult2];
+}
+
+export async function generateItineraryWithFallback(
+  model: string,
+  formInput: FormInput,
+  fallbackModel: string | null = null
+): Promise<ItineraryResult> {
+  try {
+    const result = await MODEL_GENERATORS[model](formInput);
+    return result;
+  } catch (error) {
+    if (fallbackModel) {
+      console.log(`Falling back to ${fallbackModel}...`);
+      return await MODEL_GENERATORS[fallbackModel](formInput);
+    } else {
+      throw new Error(`Model ${model} failed and no fallback provided.`);
+    }
+  }
 }
