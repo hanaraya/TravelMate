@@ -28,7 +28,7 @@ export const loginSchema = z.object({
 
 export const itineraries = pgTable("itineraries", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
   destination: text("destination").notNull(),
   dates: text("dates").notNull(),
   budget: text("budget").notNull(),
