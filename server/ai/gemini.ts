@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 export async function generateGeminiItinerary(formInput: FormInput): Promise<ItineraryResult> {
   try {
     // Get the generative model (Gemini)
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-exp-03-25" });
 
     // Create a structured prompt with travel details
     const prompt = `
