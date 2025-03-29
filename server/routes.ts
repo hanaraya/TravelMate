@@ -1,12 +1,16 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { formInputSchema, itineraryResultSchema } from "@shared/schema";
 import { generateOpenAIItinerary } from "./ai/openai";
 import { generateAnthropicItinerary } from "./ai/anthropic";
 import { ZodError } from "zod";
+import * as auth from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize authentication routes
+  await auth.registerRoutes(app);
+  
   const httpServer = createServer(app);
 
   // API endpoint to generate itineraries
@@ -14,11 +18,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Validate request body
       const formInput = formInputSchema.parse(req.body);
+      
+      // Get user ID from session if authenticated
+      const userId = req.session?.userId || null;
 
       // Create itinerary record
       const itinerary = await storage.createItinerary({
         ...formInput,
-        userId: req.body.userId || null
+        userId
       });
 
       // Generate itineraries from both AI models in parallel

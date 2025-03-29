@@ -3,7 +3,9 @@ import { users, type User, type InsertUser, type Itinerary, type InsertItinerary
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
   createItinerary(itinerary: InsertItinerary): Promise<Itinerary>;
   getItinerary(id: number): Promise<Itinerary | undefined>;
   updateItinerary(id: number, updates: Partial<Itinerary>): Promise<Itinerary | undefined>;
@@ -32,25 +34,55 @@ export class MemStorage implements IStorage {
       (user) => user.username === username,
     );
   }
+  
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.email === email,
+    );
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userCurrentId++;
-    const user: User = { ...insertUser, id };
+    const now = new Date();
+    const user: User = { 
+      ...insertUser, 
+      id,
+      createdAt: now,
+      lastLogin: null,
+      profilePicture: null
+    };
     this.users.set(id, user);
     return user;
+  }
+  
+  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, ...updates };
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 
   async createItinerary(insertItinerary: InsertItinerary): Promise<Itinerary> {
     const id = this.itineraryCurrentId++;
     const now = new Date();
+    
+    // Ensure nullable fields have proper values
+    const userId = insertItinerary.userId ?? null;
+    const notes = insertItinerary.notes ?? null;
+    
     const itinerary: Itinerary = { 
-      ...insertItinerary, 
+      ...insertItinerary,
+      userId,
+      notes, 
       id, 
       openAiItinerary: null, 
       anthropicItinerary: null, 
       chosenItinerary: null,
       createdAt: now
     };
+    
     this.itineraries.set(id, itinerary);
     return itinerary;
   }
