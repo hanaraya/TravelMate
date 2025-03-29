@@ -104,3 +104,48 @@ export const itineraryResultSchema = z.object({
 
 export type ItineraryResult = z.infer<typeof itineraryResultSchema>;
 export type Day = z.infer<typeof DAY_STRUCTURE>;
+
+// AI Statistics types
+export interface AIModelStats {
+  modelName: string;
+  totalSelections: number;
+  correctGuesses: number;
+  percentageCorrect: number;
+}
+
+export interface DestinationStats {
+  destination: string;
+  openaiCount: number;
+  anthropicCount: number;
+  totalCount: number;
+}
+
+export interface StatisticsData {
+  aiModelStats: AIModelStats[];
+  destinationStats: DestinationStats[];
+  totalItineraries: number;
+  recentTrends: {
+    openaiTrend: number[];
+    anthropicTrend: number[];
+    labels: string[];
+  };
+}
+
+// Weather types
+export interface WeatherData {
+  city: string;
+  country: string;
+  daily: WeatherDay[];
+}
+
+export interface WeatherDay {
+  date: string;
+  temperature: {
+    min: number;
+    max: number;
+  };
+  weatherCode: number;
+  weatherDescription: string;
+  precipitation: number;
+  humidity: number;
+}

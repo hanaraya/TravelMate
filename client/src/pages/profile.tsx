@@ -160,7 +160,11 @@ export default function ProfilePage() {
   
   // Redirect if not logged in
   if (userError) {
-    return null; // Redirecting in the onError handler
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Redirecting to login...</p>
+      </div>
+    ); // Redirecting in the onError handler
   }
   
   const getInitials = (name?: string) => {

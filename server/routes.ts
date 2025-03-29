@@ -41,7 +41,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.status(200).json({
-        id: updatedItinerary.id,
+        id: updatedItinerary?.id,
         openAiItinerary,
         anthropicItinerary
       });
@@ -50,7 +50,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ error: "Invalid input", details: error.errors });
       } else {
         console.error("Error generating itineraries:", error);
-        res.status(500).json({ error: "Failed to generate itineraries", message: error.message });
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: "Failed to generate itineraries", message: errorMessage });
       }
     }
   });
@@ -74,9 +75,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If they picked OpenAI and got OpenAI's itinerary, or they picked Anthropic and got Anthropic's
       // In this simplified version, we're just matching the model name directly
       let correct = false;
-      if (choice === 'openai' && itinerary.openAiItinerary?.model?.includes('GPT')) {
+      if (choice === 'openai' && typeof itinerary.openAiItinerary === 'object' && itinerary.openAiItinerary && 'model' in itinerary.openAiItinerary && 
+          typeof itinerary.openAiItinerary.model === 'string' && itinerary.openAiItinerary.model.includes('GPT')) {
         correct = true;
-      } else if (choice === 'anthropic' && itinerary.anthropicItinerary?.model?.includes('Claude')) {
+      } else if (choice === 'anthropic' && typeof itinerary.anthropicItinerary === 'object' && itinerary.anthropicItinerary && 
+                 'model' in itinerary.anthropicItinerary && typeof itinerary.anthropicItinerary.model === 'string' && 
+                 itinerary.anthropicItinerary.model.includes('Claude')) {
         correct = true;
       }
 
@@ -91,7 +95,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error saving choice:", error);
-      res.status(500).json({ error: "Failed to save choice", message: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to save choice", message: errorMessage });
     }
   });
 
@@ -108,7 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(itinerary);
     } catch (error) {
       console.error("Error retrieving itinerary:", error);
-      res.status(500).json({ error: "Failed to retrieve itinerary", message: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to retrieve itinerary", message: errorMessage });
     }
   });
 
@@ -140,7 +146,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error saving itinerary:", error);
-      res.status(500).json({ error: "Failed to save itinerary", message: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to save itinerary", message: errorMessage });
     }
   });
 
@@ -172,7 +179,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error updating itinerary:", error);
-      res.status(500).json({ error: "Failed to update itinerary", message: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to update itinerary", message: errorMessage });
     }
   });
 
@@ -189,7 +197,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(savedItineraries);
     } catch (error) {
       console.error("Error retrieving saved itineraries:", error);
-      res.status(500).json({ error: "Failed to retrieve saved itineraries", message: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to retrieve saved itineraries", message: errorMessage });
+    }
+  });
+  
+  // API endpoint to get all AI statistics
+  app.get("/api/statistics", async (req, res) => {
+    try {
+      const statistics = await storage.getAIStatistics();
+      res.status(200).json(statistics);
+    } catch (error) {
+      console.error("Error retrieving statistics:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to retrieve statistics", message: errorMessage });
+    }
+  });
+  
+  // API endpoint to get top destinations
+  app.get("/api/statistics/destinations", async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+      const destinations = await storage.getTopDestinations(limit);
+      res.status(200).json(destinations);
+    } catch (error) {
+      console.error("Error retrieving destination statistics:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to retrieve destination statistics", message: errorMessage });
+    }
+  });
+  
+  // API endpoint to get AI model performance
+  app.get("/api/statistics/models", async (req, res) => {
+    try {
+      const modelStats = await storage.getAIModelPerformance();
+      res.status(200).json(modelStats);
+    } catch (error) {
+      console.error("Error retrieving model statistics:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: "Failed to retrieve model statistics", message: errorMessage });
     }
   });
 

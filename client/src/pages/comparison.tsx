@@ -248,7 +248,7 @@ export default function Comparison() {
                 transition={{ duration: 0.6 }}
               >
                 <ItineraryCard 
-                  itinerary={itinerary.openAiItinerary}
+                  itinerary={itinerary.openAiItinerary as any}
                   type="openai"
                   onSelectItinerary={handleSelectItinerary}
                   revealed={choiceMade}
@@ -263,7 +263,7 @@ export default function Comparison() {
                 transition={{ duration: 0.6 }}
               >
                 <ItineraryCard 
-                  itinerary={itinerary.anthropicItinerary}
+                  itinerary={itinerary.anthropicItinerary as any}
                   type="anthropic"
                   onSelectItinerary={handleSelectItinerary}
                   revealed={choiceMade}

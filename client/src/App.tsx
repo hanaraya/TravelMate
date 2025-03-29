@@ -7,6 +7,7 @@ import Comparison from "@/pages/comparison";
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/profile";
 import SavedItineraries from "@/pages/saved-itineraries";
+import Statistics from "@/pages/statistics";
 import NotFound from "@/pages/not-found";
 import { ProtectedRoute } from "@/lib/protected-route";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -18,8 +19,9 @@ function Router() {
       <Route path="/comparison/:id" component={Comparison} />
       <Route path="/comparison" component={Comparison} />
       <Route path="/auth" component={AuthPage} />
-      <ProtectedRoute path="/profile" component={ProfilePage} />
-      <ProtectedRoute path="/saved-itineraries" component={SavedItineraries} />
+      <Route path="/profile">{() => <ProfilePage />}</Route>
+      <Route path="/saved-itineraries">{() => <SavedItineraries />}</Route>
+      <Route path="/statistics" component={Statistics} />
       <Route component={NotFound} />
     </Switch>
   );
