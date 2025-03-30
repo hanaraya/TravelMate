@@ -82,8 +82,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Selected itinerary is not valid" });
       }
       
-      // Extract the actual model name, handling the fallback case
-      const actualModelName = String(selectedItinerary.model);
+      // Extract the actual model name, handling the fallback case 
+      const actualModelName = String(selectedItinerary.model || '').replace(' (fallback)', '');
       
       // Check if the user correctly identified the AI model family
       let correct = false;

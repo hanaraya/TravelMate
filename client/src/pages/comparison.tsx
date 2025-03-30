@@ -16,10 +16,38 @@ import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { BookmarkIcon, CheckIcon } from 'lucide-react';
 
+const SaveButton = ({ itinerary, saveItineraryMutation, unsaveItineraryMutation }: { itinerary: Itinerary, saveItineraryMutation: any, unsaveItineraryMutation: any }) => {
+  return (
+    <div className="mt-6">
+      {itinerary.isSaved ? (
+        <Button
+          onClick={() => unsaveItineraryMutation.mutate()}
+          variant="outline"
+          className="flex items-center gap-2 shadow-sm"
+          disabled={unsaveItineraryMutation.isPending}
+        >
+          <CheckIcon className="h-4 w-4" />
+          Saved to Your Collection
+        </Button>
+      ) : (
+        <Button
+          onClick={() => saveItineraryMutation.mutate()}
+          variant="default"
+          className="flex items-center gap-2 shadow-sm"
+          disabled={saveItineraryMutation.isPending}
+        >
+          <BookmarkIcon className="h-4 w-4" />
+          Save This Itinerary
+        </Button>
+      )}
+    </div>
+  );
+};
+
 export default function Comparison() {
   const [, params] = useRoute('/comparison/:id');
   const itineraryId = params?.id ? parseInt(params.id) : null;
-  
+
   const [selectedModel, setSelectedModel] = useState<'openai' | 'anthropic' | null>(null);
   const [showRevealModal, setShowRevealModal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -29,11 +57,11 @@ export default function Comparison() {
     width: typeof window !== 'undefined' ? window.innerWidth : 0,
     height: typeof window !== 'undefined' ? window.innerHeight : 0
   });
-  
+
   const isMobile = useIsMobile();
   const { toast } = useToast();
   const { user } = useAuth();
-  
+
   useEffect(() => {
     const handleResize = () => {
       setWindowSize({
@@ -41,7 +69,7 @@ export default function Comparison() {
         height: window.innerHeight
       });
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -52,7 +80,7 @@ export default function Comparison() {
     openAiItinerary: any;
     anthropicItinerary: any;
   } | null>(null);
-  
+
   useEffect(() => {
     // Try to get itinerary data from sessionStorage
     const storedData = sessionStorage.getItem('generatedItineraries');
@@ -88,7 +116,7 @@ export default function Comparison() {
       notes: ''
     } as Itinerary : undefined
   });
-  
+
   const saveItineraryMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('POST', `/api/itineraries/${itineraryId}/save`);
@@ -110,7 +138,7 @@ export default function Comparison() {
       });
     }
   });
-  
+
   const unsaveItineraryMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('POST', `/api/itineraries/${itineraryId}/unsave`);
@@ -140,19 +168,19 @@ export default function Comparison() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: [`/api/itineraries/${itineraryId}`] });
-      
+
       // If the user got it right, show confetti
       if (data.success && data.correct === true) {
         setShowConfetti(true);
         // Hide confetti after 5 seconds
         setTimeout(() => setShowConfetti(false), 5000);
       }
-      
+
       // Store the actualModel from the response if available
       if (data.actualModel) {
         setActualModel(data.actualModel);
       }
-      
+
       setIsCorrectGuess(data.correct || false);
       setShowRevealModal(true);
     },
@@ -224,9 +252,9 @@ export default function Comparison() {
           tweenDuration={5000}
         />
       )}
-      
+
       <Header />
-      
+
       <main className="flex-grow bg-gradient-to-b from-gray-50 to-white py-16">
         <div className="container mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-md p-8 mb-12 text-center max-w-4xl mx-auto border border-gray-100">
@@ -252,72 +280,50 @@ export default function Comparison() {
                   <span>You've made your guess! See how the AIs compared.</span>
                 )}
               </p>
-              
+
               {/* Save button - only visible for logged-in users and only after the choice is made */}
-              {user && choiceMade && (
-                <div className="mt-6">
-                  {itinerary.isSaved ? (
-                    <Button
-                      onClick={() => unsaveItineraryMutation.mutate()}
-                      variant="outline"
-                      className="flex items-center gap-2 mx-auto shadow-sm"
-                      disabled={unsaveItineraryMutation.isPending}
-                    >
-                      <CheckIcon className="h-4 w-4" />
-                      Saved to Your Collection
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => saveItineraryMutation.mutate()}
-                      variant="default"
-                      className="flex items-center gap-2 mx-auto shadow-sm"
-                      disabled={saveItineraryMutation.isPending}
-                    >
-                      <BookmarkIcon className="h-4 w-4" />
-                      Save This Itinerary
-                    </Button>
-                  )}
-                </div>
-              )}
+              {user && choiceMade && <SaveButton itinerary={itinerary} saveItineraryMutation={saveItineraryMutation} unsaveItineraryMutation={unsaveItineraryMutation} />}
             </motion.div>
           </div>
-          
+
           {isGenerating ? (
             <LoadingState />
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 mb-10">
               {/* Itinerary A - OpenAI */}
-              <motion.div 
+              <motion.div
                 className="flex flex-col h-full"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <ItineraryCard 
+                <ItineraryCard
                   itinerary={itinerary.openAiItinerary as any}
                   type="openai"
                   onSelectItinerary={handleSelectItinerary}
                   revealed={choiceMade}
+                  modelName={itinerary.openAiItinerary?.model || 'OpenAI Model'} // Attempt to fix model display
                 />
               </motion.div>
-              
+
               {/* Itinerary B - Anthropic */}
-              <motion.div 
+              <motion.div
                 className="flex flex-col h-full"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6 }}
               >
-                <ItineraryCard 
+                <ItineraryCard
                   itinerary={itinerary.anthropicItinerary as any}
                   type="anthropic"
                   onSelectItinerary={handleSelectItinerary}
                   revealed={choiceMade}
+                  modelName={itinerary.anthropicItinerary?.model || 'Anthropic Model'} // Attempt to fix model display
                 />
               </motion.div>
             </div>
           )}
-          
+
           {!choiceMade && !isGenerating && (
             <div className="text-center mb-16">
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg inline-block mb-6">
@@ -330,12 +336,12 @@ export default function Comparison() {
           )}
         </div>
       </main>
-      
+
       <Footer />
-      
-      <RevealModal 
-        isOpen={showRevealModal} 
-        onClose={() => setShowRevealModal(false)} 
+
+      <RevealModal
+        isOpen={showRevealModal}
+        onClose={() => setShowRevealModal(false)}
         selectedModel={selectedModel}
         actualModel={actualModel}
         isCorrectGuess={isCorrectGuess}
